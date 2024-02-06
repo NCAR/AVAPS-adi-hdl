@@ -6,7 +6,7 @@
 ################################################################################
 ## Make script for building Lattice projects. ##################################
 #
-# * Make commands: all pb rd rd-force pb-force clean clean-pb clean-rd.
+# * Make commands: all pb rd rd-force pb-force clean clean-all clean-pb clean-rd.
 #
 # * pb: checks if dependencies exist and builds the Propel Builder project.
 #   (block design)
@@ -50,7 +50,7 @@ else
     RADIANT := radiant
 endif
 
-# Common dependencies that all projects have
+# Common dependencies that all projects have.
 M_DEPS += system_project_bd.tcl
 M_DEPS += system_bd.tcl
 M_DEPS += system_project.tcl
@@ -83,7 +83,8 @@ PB_TARGETS += $(PROJECT_NAME)/$(PROJECT_NAME)/$(PROJECT_NAME).v
 R_TARGETS += $(PROJECT_NAME)/$(PROJECT_NAME).rdf
 R_TARGETS += $(PROJECT_NAME)/impl_1/$(PROJECT_NAME)_impl_1.bit
 
-.PHONY: all pb rd rd-force clean clean-all clean-pb clean-rd # watch-pb watch-rd
+.PHONY: all pb rd rd-force pb-force clean clean-all clean-pb clean-rd
+# watch-pb watch-rd
 
 all: pb rd
 
@@ -152,7 +153,7 @@ rd-force:
 	$(PROJECT_NAME)_radiant.log, \
 	$(HL)$(PROJECT_NAME)$(NC) project)
 
-# for easily check included roject dependencies for propel builder and radiant
+# To easily check included project dependencies for Propel Builder and Radiant.
 # watch-pb:
 # 	echo $(filter-out $(PB_DEPS_FILTER_OUT),$(filter $(PB_DEPS_FILTER), $(M_DEPS)))
 # watch-rd:

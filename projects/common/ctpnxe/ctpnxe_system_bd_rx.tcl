@@ -4,7 +4,7 @@
 ###############################################################################
 
 ########### This file contains only the tcl commands for importing lib ########
-########### components and the assemly of the design. #########################
+########### components and the assembly of the design. ########################
 
 set preinst_ip_mod_dir ${env(TOOLRTF)}
 set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
@@ -251,7 +251,7 @@ sbp_assign_addr_seg -offset 'h00200000 "$project_name/cpu0_inst/AXI_M_INSTR" \
 sbp_assign_addr_seg -offset 'h00000000 "$project_name/cpu0_inst/LOCAL_BUS_M_INSTR" \
   "$project_name/tcm0_inst/LOCAL_BUS_IF_S1"
 
-## You can use this part in your project to instanciate a timer ip with max
+## You can use this part in your project to instantiate a timer ip with max
 # 8 timers if you need it.
 
 # adi_ip_update -vlnv {latticesemi.com:ip:axi_interc0:1.2.0} \

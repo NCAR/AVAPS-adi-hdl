@@ -4,7 +4,7 @@
 ###############################################################################
 
 ########### This file contains only the tcl commands for importing lib ########
-########### components and the assemly of the design. #########################
+########### components and the assembly of the design. ########################
 
 set preinst_ip_mod_dir ${env(TOOLRTF)}
 set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
@@ -251,7 +251,7 @@ sbp_assign_addr_seg -offset 'h00186C00 "$project_name/apb0_inst/APB_M01" \
 sbp_assign_addr_seg -offset 'h00187000 "$project_name/apb0_inst/APB_M03" \
   "$project_name/gpio1_inst/APB_S0"
 
-## You can use this part in your project to instanciate a timer ip with max
+## You can use this part in your project to instantiate a timer ip with max
 # 8 timers if you need it.
 
 # adi_ip_update -vlnv {latticesemi.com:ip:cpu0:2.5.0} \

@@ -78,7 +78,7 @@ if {$argc == 1} {
 }
 
 # Creates the Radiant project with default configurations.
-# the device parameters are extracted by matching part of the project name.
+# The device parameters are extracted by matching part of the project name.
 adi_project $project_name
 
 # Adds the default project files to the Radiant project.

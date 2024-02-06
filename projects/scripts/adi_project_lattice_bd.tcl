@@ -120,8 +120,8 @@ proc adi_project_create_bd {project_name args} {
 
   # I have to check for cpu selection options.
 
-  # Extracting the propel builder version from TOOLRTF env variable.
-  # It is the path for lib components in propel builder.
+  # Extracting the Propel Builder version from TOOLRTF env variable.
+  # It is the path for lib components in Propel Builder.
   if {[regexp {.*(\d{4}\.\d{1})} $env(TOOLRTF) str match]} {
       set PROPEL_BUILDER_VERSION $match
       puts "Propel Builder version: $PROPEL_BUILDER_VERSION"
@@ -153,14 +153,14 @@ proc adi_project_create_bd {project_name args} {
   set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
   set propel_builder_project_dir "$ppath/$project_name/$project_name"
 
-  # I will think on library components later becouse those are still not
+  # I will think on library components later because those are still not
   # applicable due to no ip generation tcl option. I will solve it later.
 
   if {$psc == ""} {
     file mkdir $propel_builder_project_dir
 
   # Creating the necessary .socproject file for being able to open the Radiant
-  # and Propel SDK from Propel builder if needed.
+  # and Propel SDK from Propel Builder if needed.
     set file [open "$ppath/$project_name/.socproject" w]
     puts $file [format {<?xml version="1.0" encoding="UTF-8"?>
 <propelProject>
@@ -228,7 +228,7 @@ proc adi_project_create_bd {project_name args} {
 
 ###############################################################################
 ## Creates a Propel Builder ip config file and configures the specified ip.
-## Project has to be open.
+## Project must be open.
 #
 # \opt[cfg_path] -cfg_path "./ipcfg"
 # \opt[vlnv] -vlnv {latticesemi.com:ip:cpu0:2.4.0}
@@ -299,7 +299,7 @@ proc adi_ip_config {args} {
 ###############################################################################
 ## Creates a Propel Builder ip config file and adds the specified ip to the
 ## opened project with that configuration.
-## Project has to be open.
+## Project must be open.
 #
 # \opt[cfg_path] -cfg_path "./ipcfg"
 # \opt[vlnv] -vlnv {latticesemi.com:ip:cpu0:2.4.0}
@@ -331,7 +331,7 @@ proc adi_ip_instance {args} {
 
 ###############################################################################
 ## Updates a Propel Builder ip.
-## Project has to be open.
+## Project must be open.
 #
 # \opt[cfg_path] -cfg_path "./ipcfg"
 # \opt[vlnv] -vlnv {latticesemi.com:ip:cpu0:2.4.0}

@@ -14,13 +14,13 @@
 #     optional commands that are piped trough adi_project procedure.
 # * adi_project_files - Adds a list of files to the project automatically
 #     or manually.
-# * get_file_list - Searches for files or file extentions in a specified
+# * get_file_list - Searches for files or file extensions in a specified
 #     directory, returns a list of file paths.
 # * adopt_path - No use case yet.
 # * adi_project_run - Runs the Radiant project with specified option.
 #                   - Optionally runs a list of tcl commands before running the
-#     the project.
-# * adi_project_run_cmd - Opens the radinat project and runs a list of tcl
+#     project.
+# * adi_project_run_cmd - Opens the Radinat project and runs a list of tcl
 #     commands given as parameter.
 ###############################################################################
 
@@ -81,7 +81,7 @@ proc adi_project {project_name args} {
 ###############################################################################
 ## Creates a Radiant project with specified parameters.
 ## There is an option to run a list of tcl commands given as parameter after
-## creating the radiant design.
+## creating the Radiant design.
 #
 # \opt[ppath] -ppath ./
 # \opt[device] -device "LFCPNX-100-9LFG672C"
@@ -122,13 +122,13 @@ proc adi_project_create {project_name args}  {
   puts "Performance:  $performance"
   puts "Board:  $board\n"
 
-  ## Extracting the radiant version using sys_install_version command from
+  ## Extracting the Radiant version using sys_install_version command from
   ## propel builder.
   # set RADIANT_VERSION [string range [sys_install_version] \
   #  0 [expr {[string first "." [sys_install_version]] + 1}]]
 
-  # Extracting the radiant version from TOOLRTF env variable.
-  # It is the path for the used radiant version witch includes the version.
+  # Extracting the Radiant version from TOOLRTF env variable.
+  # It is the path for the used Radiant version which includes the version.
   if {[regexp {.*(\d{4}\.\d{1})} $env(TOOLRTF) str match]} {
     set RADIANT_VERSION $match
     puts "Radiant version: $RADIANT_VERSION\n"
@@ -187,11 +187,11 @@ proc adi_project_create {project_name args}  {
 ###############################################################################
 ## Adds files to the specified project.
 ## Works in auto or manual -usage modes.
-## In auto you have to use -exts option.
-## In manual mode you have to use -flist option.
-## You can use with normalized paths, or with paths relative to the radiant
+## In auto you must use -exts option.
+## In manual mode you must use -flist option.
+## You can use with normalized paths, or with paths relative to the Radiant
 ## project file .rdf for spath (search path).
-## The ppath (project path) has to be a folder that contains the .rdf project
+## The ppath (project path) must be a folder that contains the .rdf project
 ## file max 3 directory deep.
 #
 # \opt[usage] -usage auto/manual
@@ -230,7 +230,7 @@ proc adi_project_files {project_name args} {
   puts "search depth: $sdepth"
   puts "Optional arguments: $opt_args\n"
 
-  # Searching for the radiant project file.
+  # Searching for the Radiant project file.
   set sbx_lsit [get_file_list $ppath *${project_name}.rdf 3]
   set radiant_project [lindex $sbx_lsit 0]
 
@@ -240,9 +240,9 @@ proc adi_project_files {project_name args} {
   if { [file exists $radiant_project] == 1} {
     puts "\n------Adding files to $radiant_project project.------\n"
 
-    # When i open the radiant project this tool enters the direcctory
-    # where the radiant .rdf project file is.
-    # So if we add files with relative path, then the path has to be relative
+    # When I open the Radiant project, this tool enters the directory
+    # where the Radiant .rdf project file is.
+    # So, if we add files with relative path, then the path must be relative
     # to this file.
     prj_open $radiant_project
 
@@ -278,7 +278,7 @@ proc adi_project_files {project_name args} {
   prj_save
   prj_close
 
-  # changing directory back, becouse radiant enters the project directory
+  # changing directory back, because Radiant enters the project directory
   # and lets it like that so if we use relative paths somewhere in scripts
   # it would affect our code.
   cd $dir
@@ -297,7 +297,7 @@ proc adi_project_files_default {project_name} {
 ## Returns a list of files in a given path searching recursively.
 #
 # \param[path] - the base directory
-# \param[extention_list] - the list of extention files, for example:
+# \param[extension_list] - the list of extension files, for example:
 #                                                              {*.v *.tcl *.xdc}
 # \param[depth] - the depth of recursive search
 # \return - file_list
@@ -306,19 +306,19 @@ proc adi_project_files_default {project_name} {
 # For example you can use like:
 #                                    get_file_list [file normalize ./] {*.ipx} 7
 #   to get the list of .ipx files from the current directory 7 directories deep
-#   with normalised paths or u can use with relative paths like:
+#   with normalized paths or you can use with relative paths like:
 #                                                     get_file_list ./ {*.ipx} 7
 ###############################################################################
-proc get_file_list {path {extention_list {*.ipx}} {depth 5}} {
+proc get_file_list {path {extension_list {*.ipx}} {depth 5}} {
   set file_list {}
-  foreach ext $extention_list {
+  foreach ext $extension_list {
     set file_list [list {*}$file_list \
       {*}[glob -nocomplain -type f -directory $path $ext]]
   }
   if {$depth > 0} {
     foreach dir [glob -nocomplain -type d -directory $path *] {
       set file_list [list {*}$file_list \
-        {*}[get_file_list $dir $extention_list [expr {$depth-1}]]]
+        {*}[get_file_list $dir $extension_list [expr {$depth-1}]]]
     }
   }
   return $file_list
