@@ -61,9 +61,9 @@ ldc_set_location -site {L2} [get_ports rxd_i]
 ldc_set_port -iobuf {IO_TYPE=LVCMOS33} [get_ports rxd_i]
 ldc_set_port -iobuf {IO_TYPE=LVCMOS33} [get_ports txd_o]
 
-#i2c pmod2
-ldc_set_location -site {AA2} [get_ports scl_io]
-ldc_set_location -site {AA1} [get_ports sda_io]
+#i2c FMC
+ldc_set_location -site {H22} [get_ports scl_io]
+ldc_set_location -site {H23} [get_ports sda_io]
 
 ldc_set_port -iobuf {IO_TYPE=LVCMOS33 PULLMODE=UP} [get_ports scl_io]
 ldc_set_port -iobuf {IO_TYPE=LVCMOS33 PULLMODE=UP} [get_ports sda_io]
