@@ -3,6 +3,12 @@
 ### SPDX short identifier: ADIBSD
 ###############################################################################
 
+set RESOLUTION_16_18N $ad_project_params(RESOLUTION_16_18N)
+puts "build parameters: RESOLUTION_16_18N: $RESOLUTION_16_18N"
+
+set ADC_DATA_WIDTH [expr {$RESOLUTION_16_18N == 1 ? 16 : 18}]
+set BITS_PER_SAMPLE [expr {$RESOLUTION_16_18N == 1 ? 16 : 32}]
+
 # ltc2387
 create_bd_port -dir I ref_clk
 create_bd_port -dir O sampling_clk
@@ -16,6 +22,8 @@ create_bd_port -dir O clk_gate
 # adc peripheral
 
 ad_ip_instance axi_pulsar_lvds axi_pulsar_lvds
+ad_ip_parameter axi_pulsar_lvds CONFIG.ADC_DATA_WIDTH $ADC_DATA_WIDTH
+ad_ip_parameter axi_pulsar_lvds CONFIG.BITS_PER_SAMPLE $BITS_PER_SAMPLE
 
 # axi pwm gen
 
@@ -37,7 +45,7 @@ ad_ip_parameter axi_pulsar_lvds_dma CONFIG.SYNC_TRANSFER_START 0
 ad_ip_parameter axi_pulsar_lvds_dma CONFIG.AXI_SLICE_SRC 0
 ad_ip_parameter axi_pulsar_lvds_dma CONFIG.AXI_SLICE_DEST 0
 ad_ip_parameter axi_pulsar_lvds_dma CONFIG.DMA_2D_TRANSFER 0
-ad_ip_parameter axi_pulsar_lvds_dma CONFIG.DMA_DATA_WIDTH_SRC 32
+ad_ip_parameter axi_pulsar_lvds_dma CONFIG.DMA_DATA_WIDTH_SRC $BITS_PER_SAMPLE
 ad_ip_parameter axi_pulsar_lvds_dma CONFIG.DMA_DATA_WIDTH_DEST 64
 
 # axi clk_gen
@@ -45,8 +53,8 @@ ad_ip_parameter axi_pulsar_lvds_dma CONFIG.DMA_DATA_WIDTH_DEST 64
 ad_ip_instance axi_clkgen reference_clkgen
 ad_ip_parameter reference_clkgen CONFIG.VCO_DIV 1
 ad_ip_parameter reference_clkgen CONFIG.VCO_MUL 10
-ad_ip_parameter reference_clkgen CONFIG.CLK0_DIV 8
-ad_ip_parameter reference_clkgen CONFIG.CLK1_DIV 4
+ad_ip_parameter reference_clkgen CONFIG.CLK0_DIV 6
+#ad_ip_parameter reference_clkgen CONFIG.CLK1_DIV 4
 
 ad_connect reference_clkgen/clk   $sys_cpu_clk             
 ad_connect reference_clkgen/clk_0 sampling_clk

@@ -47,7 +47,9 @@ module axi_pulsar_lvds #(
   parameter DELAY_REFCLK_FREQUENCY = 200,
   parameter USERPORTS_DISABLE = 0,
   parameter DATAFORMAT_DISABLE = 0,
-  parameter ADC_INIT_DELAY = 0
+  parameter ADC_INIT_DELAY = 0,
+  parameter ADC_DATA_WIDTH = 16,
+  parameter BITS_PER_SAMPLE = 32
 ) (
   input                     delay_clk,
 
@@ -93,7 +95,7 @@ module axi_pulsar_lvds #(
 
   // internal signals
 
-  wire   [15:0]   adc_data_s;
+  wire   [(ADC_DATA_WIDTH-1):0]   adc_data_s;
   wire            adc_or_s;
   wire   [ 1:0]   up_dld_s;
   wire   [ 9:0]   up_dwdata_s;
@@ -126,7 +128,7 @@ module axi_pulsar_lvds #(
   wire            up_rstn;
   wire            delay_rst;
   wire            adc_valid_ch_s;
-  wire   [17:0]   adc_data_ch_s;
+  wire   [(ADC_DATA_WIDTH-1):0]   adc_data_ch_s;
 
   // signal name changes
 
@@ -154,7 +156,9 @@ module axi_pulsar_lvds #(
     .FPGA_TECHNOLOGY (FPGA_TECHNOLOGY),
     .IO_DELAY_GROUP (IO_DELAY_GROUP),
     .DELAY_REFCLK_FREQUENCY (DELAY_REFCLK_FREQUENCY),
-    .IODELAY_CTRL (IODELAY_CTRL)
+    .IODELAY_CTRL (IODELAY_CTRL),
+    .ADC_DATA_WIDTH (ADC_DATA_WIDTH)
+    
   ) axi_pulsar_lvds_if_inst (
     .up_clk(up_clk),
     .up_dld(up_dld_s),
@@ -176,7 +180,9 @@ module axi_pulsar_lvds #(
 
   axi_pulsar_lvds_channel #(
     .USERPORTS_DISABLE (USERPORTS_DISABLE),
-    .DATAFORMAT_DISABLE (DATAFORMAT_DISABLE)
+    .DATAFORMAT_DISABLE (DATAFORMAT_DISABLE),
+    .ADC_DATA_WIDTH (ADC_DATA_WIDTH),
+    .BITS_PER_SAMPLE (BITS_PER_SAMPLE)
   ) i_channel (
     .adc_clk (adc_clk),
     .adc_rst (adc_rst),

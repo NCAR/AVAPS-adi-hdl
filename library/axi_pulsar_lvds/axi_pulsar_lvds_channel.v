@@ -37,7 +37,9 @@
 
 module axi_pulsar_lvds_channel #(
   parameter USERPORTS_DISABLE = 0,
-  parameter DATAFORMAT_DISABLE = 0
+  parameter DATAFORMAT_DISABLE = 0,
+  parameter ADC_DATA_WIDTH = 16,
+  parameter BITS_PER_SAMPLE = 32
 ) (
 
   // adc interface
@@ -76,7 +78,7 @@ module axi_pulsar_lvds_channel #(
   // internal signals
 
   wire          adc_dfmt_valid_s;
-  wire  [15:0]  adc_dfmt_data_s;
+  wire  [(ADC_DATA_WIDTH-1):0]  adc_dfmt_data_s;
   wire          adc_dcfilter_valid_s;
   wire          adc_iqcor_enb_s;
   wire          adc_dcfilt_enb_s;
@@ -91,8 +93,8 @@ module axi_pulsar_lvds_channel #(
   wire  [ 3:0]  adc_data_sel_s;
 
   ad_datafmt #(
-    .DATA_WIDTH (18),
-    .BITS_PER_SAMPLE (32),
+    .DATA_WIDTH (ADC_DATA_WIDTH),
+    .BITS_PER_SAMPLE (BITS_PER_SAMPLE),
     .DISABLE (DATAFORMAT_DISABLE)
   ) i_ad_datafmt (
     .clk (adc_clk),

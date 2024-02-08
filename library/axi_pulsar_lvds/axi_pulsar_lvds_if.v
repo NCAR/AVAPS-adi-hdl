@@ -42,7 +42,8 @@ module axi_pulsar_lvds_if #(
   parameter FPGA_TECHNOLOGY = 1,
   parameter IO_DELAY_GROUP = "adc_if_delay_group",
   parameter IODELAY_CTRL = 1,
-  parameter DELAY_REFCLK_FREQUENCY = 200
+  parameter DELAY_REFCLK_FREQUENCY = 200,
+  parameter ADC_DATA_WIDTH = 16
 ) (
 
   // delay interface
@@ -65,7 +66,7 @@ module axi_pulsar_lvds_if #(
   input             d_n,
 
   output reg        adc_valid,
-  output reg [17:0] adc_data
+  output reg [(ADC_DATA_WIDTH-1):0] adc_data
 );
 
   // internal wires
@@ -77,7 +78,7 @@ module axi_pulsar_lvds_if #(
   // internal register
 
   reg     [ 1:0]       clk_gate_d    = 'b0;
-  reg     [17:0]       adc_data_int  = 'b0;
+  reg     [(ADC_DATA_WIDTH-1):0]       adc_data_int  = 'b0;
 
   // adc_valid is 1 for the current sample that is sent
 
@@ -91,7 +92,7 @@ module axi_pulsar_lvds_if #(
   end
 
   always @(posedge dco) begin
-      adc_data_int <= {adc_data_int[16:0], d_p_int_s};
+      adc_data_int <= {adc_data_int[(ADC_DATA_WIDTH-2):0], d_p_int_s};
   end
 
   // data interface - differential to single ended
@@ -119,9 +120,13 @@ module axi_pulsar_lvds_if #(
 
   // clock
 
-  IBUFGDS i_rx_clk_ibuf (
+  IBUFDS i_rx_clk_ibuf (
     .I (dco_p),
     .IB(dco_n),
-    .O (dco));
+    .O (dco_s));
+
+    BUFH i_clk_buf (
+      .I (dco_s),
+      .O (dco));
 
 endmodule
