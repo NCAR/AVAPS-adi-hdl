@@ -1,5 +1,5 @@
 ###############################################################################
-## Copyright (C) 2022-2023 Analog Devices, Inc. All rights reserved.
+## Copyright (C) 2022-2024 Analog Devices, Inc. All rights reserved.
 ### SPDX short identifier: ADIBSD
 ###############################################################################
 
@@ -8,10 +8,9 @@ source ../../../scripts/adi_env.tcl
 source $ad_hdl_dir/projects/scripts/adi_project_xilinx.tcl
 source $ad_hdl_dir/projects/scripts/adi_board.tcl
 
-# DEV_CONFIG - The device which will be used
 # RESOLUTION_16_18N - The resolution of the ADC
 # LEGEND: 18 BITS RESOLUTION AD7960 - 0
-#         16 BITS RESOLUTION AD7626 - 1 
+#         16 BITS RESOLUTION AD7626 - 1
 
 set RESOLUTION_16_18N [get_env_param RESOLUTION_16_18N 0]
 
@@ -34,6 +33,6 @@ adi_project_files pulsar_lvds_adc_zed [list \
     adi_project_files pulsar_lvds_adc_zed [list \
       "ad7626_system_top.v" ]
   }
-} 
+}
 
 adi_project_run pulsar_lvds_adc_zed

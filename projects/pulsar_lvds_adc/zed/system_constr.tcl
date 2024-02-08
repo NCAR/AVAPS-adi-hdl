@@ -1,5 +1,5 @@
 ###############################################################################
-## Copyright (C) 2022-2023 Analog Devices, Inc. All rights reserved.
+## Copyright (C) 2022-2024 Analog Devices, Inc. All rights reserved.
 ### SPDX short identifier: ADIBSD
 ###############################################################################
 
@@ -25,11 +25,11 @@ set_property -dict {PACKAGE_PIN N20 IOSTANDARD LVDS_25} [get_ports cnv_n]
 
 set_property -dict {PACKAGE_PIN L18 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports dco_p]
 set_property -dict {PACKAGE_PIN L19 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports dco_n]
-set_property -dict {PACKAGE_PIN P17 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports d_p] 
+set_property -dict {PACKAGE_PIN P17 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports d_p]
 set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports d_n]
 
-# control signals 
-set_property -dict {PACKAGE_PIN N22 IOSTANDARD LVCMOS25} [get_ports en0_fmc]   
+# control signals
+set_property -dict {PACKAGE_PIN N22 IOSTANDARD LVCMOS25} [get_ports en0_fmc]
 set_property -dict {PACKAGE_PIN P22 IOSTANDARD LVCMOS25} [get_ports en1_fmc]
 
 switch $RESOLUTION_16_18N {
@@ -38,14 +38,14 @@ switch $RESOLUTION_16_18N {
     set_property -dict {PACKAGE_PIN M21 IOSTANDARD LVCMOS25} [get_ports en2_fmc]
     set_property -dict {PACKAGE_PIN M22 IOSTANDARD LVCMOS25} [get_ports en3_fmc]
   }
-  1 { 
-    
-    set_property -dict {PACKAGE_PIN M21 IOSTANDARD LVCMOS25} [get_ports fpga_pll_cnv_p]
-    set_property -dict {PACKAGE_PIN M22 IOSTANDARD LVCMOS25} [get_ports fpga_pll_cnv_n]
+  1 {
+
+    set_property -dict {PACKAGE_PIN M21 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports fpga_pll_cnv_p]
+    set_property -dict {PACKAGE_PIN M22 IOSTANDARD LVDS_25 DIFF_TERM 1} [get_ports fpga_pll_cnv_n]
 
     set_property -dict {PACKAGE_PIN J18 IOSTANDARD LVCMOS25} [get_ports pll_sync_fmc]
   }
-}  
+}
 
 # 166.66 MHz clock
 
@@ -61,8 +61,5 @@ set input_ports         d_p;      # List of input ports
 # Input Delay Constraint
 set_input_delay -clock $input_clock -max [expr $input_clock_period - $dv_bre] [get_ports $input_ports];
 set_input_delay -clock $input_clock -min $dv_are                              [get_ports $input_ports];
-
-# Report Timing Template
-# report_timing -from [get_ports $input_ports] -max_paths 20 -nworst 1 -delay_type min_max -name src_sync_cntr_rise_in  -file src_sync_cntr_rise_in.txt;		  
           
 set_clock_uncertainty -setup -from [get_clocks out_clock] -to [get_clocks dco] 7.000

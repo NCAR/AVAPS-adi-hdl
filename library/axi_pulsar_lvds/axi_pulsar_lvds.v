@@ -1,6 +1,6 @@
 // ***************************************************************************
 // ***************************************************************************
-// Copyright (C) 2022-2023 Analog Devices, Inc. All rights reserved.
+// Copyright (C) 2022-2024 Analog Devices, Inc. All rights reserved.
 //
 // In this HDL repository, there are many different and unique modules, consisting
 // of various HDL (Verilog or VHDL) components. The individual modules are
@@ -158,7 +158,7 @@ module axi_pulsar_lvds #(
     .DELAY_REFCLK_FREQUENCY (DELAY_REFCLK_FREQUENCY),
     .IODELAY_CTRL (IODELAY_CTRL),
     .ADC_DATA_WIDTH (ADC_DATA_WIDTH)
-    
+
   ) axi_pulsar_lvds_if_inst (
     .up_clk(up_clk),
     .up_dld(up_dld_s),

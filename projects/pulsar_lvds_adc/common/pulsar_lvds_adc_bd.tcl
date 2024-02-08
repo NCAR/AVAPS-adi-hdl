@@ -1,5 +1,5 @@
 ###############################################################################
-## Copyright (C) 2022-2023 Analog Devices, Inc. All rights reserved.
+## Copyright (C) 2022-2024 Analog Devices, Inc. All rights reserved.
 ### SPDX short identifier: ADIBSD
 ###############################################################################
 
@@ -56,7 +56,7 @@ ad_ip_parameter reference_clkgen CONFIG.VCO_MUL 10
 ad_ip_parameter reference_clkgen CONFIG.CLK0_DIV 6
 #ad_ip_parameter reference_clkgen CONFIG.CLK1_DIV 4
 
-ad_connect reference_clkgen/clk   $sys_cpu_clk             
+ad_connect reference_clkgen/clk   $sys_cpu_clk
 ad_connect reference_clkgen/clk_0 sampling_clk
 ad_connect reference_clkgen/clk_0 axi_pulsar_lvds/ref_clk
 

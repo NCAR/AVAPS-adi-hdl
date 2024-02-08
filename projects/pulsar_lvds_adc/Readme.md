@@ -1,4 +1,4 @@
-# CN0577 HDL Project
+# PULSAR_LVDS_ADC HDL Project
 
 Here are some pointers to help you:
   * [EVAL-AD7626 board Product Page ](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-AD7626.html)
@@ -9,5 +9,8 @@ Here are some pointers to help you:
   * HDL Doc: https://wiki.analog.com/resources/eval/user-guides/circuits-from-the-lab/cn0577/hdl
   * Project Doc: https://wiki.analog.com/resources/eval/user-guides/circuits-from-the-lab/cn0577
   * Linux Drivers: https://wiki.analog.com/resources/tools-software/linux-drivers/iio-adc/ltc2387
-  
 
+How to use over-writable parameters from the environment:
+```
+hdl/projects/pulsar_lvds_adc/zed> make RESOLUTION_16_18N=0
+RESOLUTION_16_18N  - Defines the resolution of the ADC: 0 - 18 BITS, 1 - 16 BITS.
