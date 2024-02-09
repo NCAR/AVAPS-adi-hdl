@@ -7,8 +7,16 @@
 ########### components and the assembly of the design. ########################
 
 set preinst_ip_mod_dir ${env(TOOLRTF)}
-set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
 set conf_dir $ad_hdl_dir/projects/common/ctpnxe/ipcfg
+# If you want to use file path for the adi_ip_instance or adi_ip_update, use the
+# -ip_path option and the file path to the ip. The built in modules and IPs can
+# be found in the $preinst_ip_mod_dir, the downloaded IPs can be found somewhere
+# in the <path_to>/PropelIPLocal directory.
+# You can also use the exact text from the <instance_name>.cfg file from an
+# already instatiated IP folder from the
+# <project_name>/<project_name>/<.lib|lib>/<module|ip>/<instance_name><version>
+# folder to configure an IP. For that you have to use the -ip_params option.
+# set ip_download_path ${env(USERPROFILE)}/PropelIPLocal # by default on windows
 
 ## configure ip components and add to design. #################################
 adi_ip_instance -vlnv {latticesemi.com:ip:cpu0:2.3.0} \

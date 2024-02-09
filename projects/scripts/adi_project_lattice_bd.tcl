@@ -150,7 +150,6 @@ proc adi_project_create_bd {project_name args} {
   }
 
   set preinst_ip_mod_dir ${env(TOOLRTF)}
-  set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
   set propel_builder_project_dir "$ppath/$project_name/$project_name"
 
   # I will think on library components later because those are still not

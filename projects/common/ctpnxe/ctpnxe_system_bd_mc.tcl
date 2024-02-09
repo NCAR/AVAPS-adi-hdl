@@ -7,100 +7,108 @@
 ########### components and the assembly of the design. ########################
 
 set preinst_ip_mod_dir ${env(TOOLRTF)}
-set ip_download_path ${env(USERPROFILE)}/PropelIPLocal
 set conf_dir $ad_hdl_dir/projects/common/ctpnxe/ipcfg
+# If you want to use file path for the adi_ip_instance or adi_ip_update, use the
+# -ip_path option and the file path to the ip. The built in modules and IPs can
+# be found in the $preinst_ip_mod_dir, the downloaded IPs can be found somewhere
+# in the <path_to>/PropelIPLocal directory.
+# You can also use the exact text from the <instance_name>.cfg file from an
+# already instatiated IP folder from the
+# <project_name>/<project_name>/<.lib|lib>/<module|ip>/<instance_name><version>
+# folder to configure an IP. For that you have to use the -ip_params option.
+# set ip_download_path ${env(USERPROFILE)}/PropelIPLocal # by default on windows
 
 ## configure ip components and add to design. #################################
 adi_ip_instance -vlnv {latticesemi.com:ip:cpu0:2.5.0} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_riscv_mc_2.5.0" \
-  -ip_params {
-    "SIMULATION": false,
-    "DEBUG_ENABLE": true,
-    "M_STANDALONE": true,
-    "IRQ_NUM": 5
+  -meta_vlnv {latticesemi.com:ip:riscv_mc:2.5.0} \
+  -cfg_value {
+    SIMULATION: false,
+    DEBUG_ENABLE: true,
+    M_STANDALONE: true,
+    IRQ_NUM: 5
   } \
   -ip_iname "cpu0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:gpio0:1.6.2} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_gpio_1.6.2" \
-  -ip_params {
-    "IO_LINES_COUNT": 32,
-    "EXTERNAL_BUF": true,
-    "DIRECTION_DEF_VAL_INPUT": "00FFFFFF"
+  -meta_vlnv {latticesemi.com:ip:gpio:1.6.2} \
+  -cfg_value {
+    IO_LINES_COUNT: 32,
+    EXTERNAL_BUF: true,
+    DIRECTION_DEF_VAL_INPUT: 00FFFFFF
   } \
   -ip_iname "gpio0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:gpio1:1.6.2} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_gpio_1.6.2" \
-  -ip_params {
-    "IO_LINES_COUNT": 32,
-    "EXTERNAL_BUF": true,
-    "DIRECTION_DEF_VAL_INPUT": "00000000"
+  -meta_vlnv {latticesemi.com:ip:gpio:1.6.2} \
+  -cfg_value {
+    IO_LINES_COUNT: 32,
+    EXTERNAL_BUF: true,
+    DIRECTION_DEF_VAL_INPUT: 00000000
   } \
   -ip_iname "gpio1_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:uart0:1.3.0} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_uart_1.3.0" \
-  -ip_params {
-    "SYS_CLOCK_FREQ": 75.0
+  -meta_vlnv {latticesemi.com:ip:uart:1.3.0} \
+  -cfg_value {
+    SYS_CLOCK_FREQ: 75.0
   } \
   -ip_iname "uart0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:spi0:1.4.1} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_spi_master_1.4.1" \
-  -ip_params {
-    "DATA_WIDTH": 8,
-    "FIFO_DEPTH": 256,
-    "SYS_CLOCK_FREQ": 75.0
+  -meta_vlnv {latticesemi.com:ip:spi_master:1.4.1} \
+  -cfg_value {
+    DATA_WIDTH: 8,
+    FIFO_DEPTH: 256,
+    SYS_CLOCK_FREQ: 75.0
   } \
   -ip_iname "spi0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:i2c0:1.5.0} \
-  -ip_path "$ip_download_path/latticesemi.com_ip_i2c_master_1.5.0" \
-  -ip_params {
-    "SYS_CLOCK_FREQ": 75
+  -meta_vlnv {latticesemi.com:ip:i2c_master:1.5.0} \
+  -cfg_value {
+    SYS_CLOCK_FREQ: 75
   } \
   -ip_iname "i2c0_inst"
 adi_ip_instance -vlnv {latticesemi.com:module:pll0:1.8.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/lifcl/pll" \
-  -ip_params {
-    "gui_refclk_freq": 125.0,
-    "gui_clk_op_freq": 75.0,
-    "gui_clk_os_en": false
+  -meta_vlnv {latticesemi.com:module:pll:1.8.0} \
+  -cfg_value {
+    gui_refclk_freq: 125.0,
+    gui_clk_op_freq: 75.0,
+    gui_clk_os_en: false
   } \
   -ip_iname "pll0_inst"
 adi_ip_instance -vlnv {latticesemi.com:module:ahbl0:1.3.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/common/ahb_lite_interconnect" \
-  -ip_params {
-    "TOTAL_MASTER_CNT": 2,
-    "TOTAL_SLAVE_CNT": 5
+  -meta_vlnv {latticesemi.com:module:ahb_lite_interconnect:1.3.0} \
+  -cfg_value {
+    TOTAL_MASTER_CNT: 2,
+    TOTAL_SLAVE_CNT: 5
   } \
   -ip_iname "ahbl0_inst"
 adi_ip_instance -vlnv {latticesemi.com:module:ahbl2apb0:1.1.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/common/ahb_lite_to_apb_bridge" \
-  -ip_params {
-    "APB_CLK_EN": false
+  -meta_vlnv {latticesemi.com:module:ahb_lite_to_apb_bridge:1.1.0} \
+  -cfg_value {
+    APB_CLK_EN: false
   } \
   -ip_iname "ahbl2apb0_inst"
 adi_ip_instance -vlnv {latticesemi.com:module:apb0:1.2.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/common/apb_interconnect" \
-  -ip_params {
-    "TOTAL_MASTER_CNT": 1,
-    "TOTAL_SLAVE_CNT": 4
+  -meta_vlnv {latticesemi.com:module:apb_interconnect:1.2.0} \
+  -cfg_value {
+    TOTAL_MASTER_CNT: 1,
+    TOTAL_SLAVE_CNT: 4
   } \
   -ip_iname "apb0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:sysmem0:2.1.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/common/system_memory" \
-  -ip_params {
-    "ADDR_DEPTH": 32768,
-    "MEMORY_TYPE": "LRAM",
-    "PORT_COUNT": 2,
-    "INIT_MEM": false,
-    "REGMODE_S0": true,
-    "REGMODE_S1": true
+  -meta_vlnv {latticesemi.com:ip:system_memory:2.1.0} \
+  -cfg_value {
+    ADDR_DEPTH: 32768,
+    MEMORY_TYPE: LRAM,
+    PORT_COUNT: 2,
+    INIT_MEM: false,
+    REGMODE_S0: true,
+    REGMODE_S1: true
   } \
   -ip_iname "sysmem0_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:isr_ram0:2.1.0} \
-  -ip_path "$preinst_ip_mod_dir/ip/common/system_memory" \
-  -ip_params {
-    "ADDR_DEPTH": 8192,
-    "MEMORY_TYPE": "EBR",
-    "REGMODE_S0": true
+  -meta_vlnv {latticesemi.com:ip:system_memory:2.1.0} \
+  -cfg_value {
+    ADDR_DEPTH: 8192,
+    MEMORY_TYPE: EBR,
+    REGMODE_S0: true
   } \
   -ip_iname "isr_ram0_inst"
 
@@ -255,20 +263,20 @@ sbp_assign_addr_seg -offset 'h00187000 "$project_name/apb0_inst/APB_M03" \
 # 8 timers if you need it.
 
 # adi_ip_update -vlnv {latticesemi.com:ip:cpu0:2.5.0} \
-#   -ip_path "$ip_download_path/latticesemi.com_ip_riscv_mc_2.5.0" \
-#   -ip_params {
-#     "SIMULATION": false,
-#     "DEBUG_ENABLE": true,
-#     "M_STANDALONE": true,
-#     "IRQ_NUM": 6
+#   -meta_vlnv {latticesemi.com:ip:riscv_mc:2.5.0} \
+#   -cfg_value {
+#     SIMULATION: false,
+#     DEBUG_ENABLE: true,
+#     M_STANDALONE: true,
+#     IRQ_NUM: 6
 #   } \
 #   -ip_iname "cpu0_inst"
 
 # adi_ip_update -vlnv {latticesemi.com:module:apb0:1.2.0} \
-#   -ip_path "$preinst_ip_mod_dir/ip/common/apb_interconnect" \
-#   -ip_params {
-#     "TOTAL_MASTER_CNT": 1,
-#     "TOTAL_SLAVE_CNT": 5
+#   -meta_vlnv {latticesemi.com:module:apb_interconnect:1.2.0} \
+#   -cfg_value {
+#     TOTAL_MASTER_CNT: 1,
+#     TOTAL_SLAVE_CNT: 5
 #   } \
 #   -ip_iname "apb0_inst"
 
