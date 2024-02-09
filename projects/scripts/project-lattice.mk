@@ -42,12 +42,12 @@ HDL_PROJECT_PATH := $(subst scripts/project-lattice.mk,,$(lastword $(MAKEFILE_LI
 
 include $(HDL_PROJECT_PATH)../quiet.mk
 
-PROPEL_BUILDER := propelbld
-
 ifeq ($(OS), Windows_NT)
-    RADIANT := pnmainc
+	RADIANT := pnmainc
+	PROPEL_BUILDER := propelbld
 else
-    RADIANT := radiant
+	RADIANT := radiantc
+	PROPEL_BUILDER := propelbldwrap
 endif
 
 # Common dependencies that all projects have.
