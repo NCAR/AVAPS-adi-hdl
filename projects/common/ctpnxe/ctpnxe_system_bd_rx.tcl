@@ -51,8 +51,8 @@ adi_ip_instance -vlnv {latticesemi.com:ip:spi0:1.4.1} \
     SYS_CLOCK_FREQ: 100
   } \
   -ip_iname "spi0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:i2c0:1.5.0} \
-  -meta_vlnv {latticesemi.com:ip:i2c_master:1.5.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:i2c0:2.0.0} \
+  -meta_vlnv {latticesemi.com:ip:i2c_controller:2.0.0} \
   -cfg_value {
     SYS_CLOCK_FREQ: 100
   } \
@@ -66,8 +66,8 @@ adi_ip_instance -vlnv {latticesemi.com:module:pll0:1.8.0} \
     gui_clk_os_freq: 10.0
   } \
   -ip_iname "pll0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:axi_interc0:1.2.0} \
-  -meta_vlnv {latticesemi.com:ip:axi_interconnect:1.2.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:axi_interc0:1.2.2} \
+  -meta_vlnv {latticesemi.com:ip:axi_interconnect:1.2.2} \
   -cfg_value {
     TOTAL_EXTMAS_CNT: 1,
     TOTAL_EXTSLV_CNT: 4,
@@ -75,20 +75,20 @@ adi_ip_instance -vlnv {latticesemi.com:ip:axi_interc0:1.2.0} \
     EXT_SLV_AXI_ID_WIDTH: 8
   } \
   -ip_iname "axi_interc0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:axi_ahb0:1.1.0} \
-  -meta_vlnv {latticesemi.com:ip:axi2ahb_bridge:1.1.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:axi_ahb0:1.1.1} \
+  -meta_vlnv {latticesemi.com:ip:axi2ahb_bridge:1.1.1} \
   -cfg_value {} \
   -ip_iname "axi_ahb0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb0:1.1.0} \
-  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb0:1.1.1} \
+  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.1} \
   -cfg_value {} \
   -ip_iname "axi_apb0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb1:1.1.0} \
-  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb1:1.1.1} \
+  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.1} \
   -cfg_value {} \
   -ip_iname "axi_apb1_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb2:1.1.0} \
-  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:axi_apb2:1.1.1} \
+  -meta_vlnv {latticesemi.com:ip:axi2apb_bridge:1.1.1} \
   -cfg_value {} \
   -ip_iname "axi_apb2_inst"
 adi_ip_instance -vlnv {latticesemi.com:ip:sysmem0:2.1.0} \

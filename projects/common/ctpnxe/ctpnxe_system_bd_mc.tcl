@@ -58,8 +58,8 @@ adi_ip_instance -vlnv {latticesemi.com:ip:spi0:1.4.1} \
     SYS_CLOCK_FREQ: 75.0
   } \
   -ip_iname "spi0_inst"
-adi_ip_instance -vlnv {latticesemi.com:ip:i2c0:1.5.0} \
-  -meta_vlnv {latticesemi.com:ip:i2c_master:1.5.0} \
+adi_ip_instance -vlnv {latticesemi.com:ip:i2c0:2.0.0} \
+  -meta_vlnv {latticesemi.com:ip:i2c_controller:2.0.0} \
   -cfg_value {
     SYS_CLOCK_FREQ: 75
   } \
