@@ -12,7 +12,13 @@ source $ad_hdl_dir/projects/scripts/adi_board.tcl
 # LEGEND: 18 BITS RESOLUTION AD7960 - 0
 #         16 BITS RESOLUTION AD7626 - 1
 
-set RESOLUTION_16_18N [get_env_param RESOLUTION_16_18N 0]
+set RESOLUTION_16_18N 0
+
+if {[info exists ::env(RESOLUTION_16_18N)]} {
+  set RESOLUTION_16_18N $::env(RESOLUTION_16_18N)
+} else {
+  set env(RESOLUTION_16_18N) $RESOLUTION_16_18N
+}
 
 adi_project pulsar_lvds_adc_zed 0 [list \
   RESOLUTION_16_18N  $RESOLUTION_16_18N \
