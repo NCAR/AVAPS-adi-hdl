@@ -35,14 +35,14 @@
 
 `timescale 1ns/100ps
 
-`include "i3c_controller_bit_mod_cmd.v"
-`include "i3c_controller_word_cmd.v"
+`include "i3c_controller_bit_mod.vh"
+`include "i3c_controller_word.vh"
 
 module i3c_controller_core #(
   parameter MAX_DEVS = 16
 ) (
-  input clk,
-  input reset_n,
+  input         clk,
+  input         reset_n,
 
   // Command parsed
 
@@ -55,17 +55,17 @@ module i3c_controller_core #(
 
   // Byte stream
 
-  output sdo_ready,
-  input  sdo_valid,
+  output       sdo_ready,
+  input        sdo_valid,
   input  [7:0] sdo,
 
-  input  sdi_ready,
-  output sdi_valid,
-  output sdi_last,
+  input        sdi_ready,
+  output       sdi_valid,
+  output       sdi_last,
   output [7:0] sdi,
 
-  input  ibi_ready,
-  output ibi_valid,
+  input         ibi_ready,
+  output        ibi_valid,
   output [14:0] ibi,
 
   // uP accessible info
@@ -77,15 +77,15 @@ module i3c_controller_core #(
 
   // I3C bus signals
 
-  output i3c_scl,
-  output i3c_sdo,
-  input  i3c_sdi,
-  output i3c_t
+  output       i3c_scl,
+  output       i3c_sdo,
+  input        i3c_sdi,
+  output       i3c_t
 );
 
-  wire [`MOD_BIT_CMD_WIDTH:0] cmd;
-  wire cmd_valid;
-  wire cmd_ready;
+  wire [`MOD_BIT_CMD_WIDTH:0] cmdb;
+  wire cmdb_valid;
+  wire cmdb_ready;
 
   wire rx;
   wire rx_raw;
@@ -106,8 +106,8 @@ module i3c_controller_core #(
   wire [6:0] ibi_da;
   wire [7:0] ibi_mdb;
 
-  wire cmd_nop;
-  wire cmd_i2c_mode;
+  wire nop;
+  wire i2c_mode;
 
   i3c_controller_framing #(
     .MAX_DEVS(MAX_DEVS)
@@ -128,8 +128,8 @@ module i3c_controller_core #(
     .cmdw_nack_bcast(cmdw_nack_bcast),
     .cmdw_nack_resp(cmdw_nack_resp),
     .rx_raw(rx_raw),
-    .cmd_i2c_mode(cmd_i2c_mode),
-    .cmd_nop(cmd_nop),
+    .i2c_mode(i2c_mode),
+    .nop(nop),
     .arbitration_valid(arbitration_valid),
     .ibi_dev_is_attached(ibi_dev_is_attached),
     .ibi_bcr_2(ibi_bcr_2),
@@ -153,9 +153,9 @@ module i3c_controller_core #(
     .sdi_valid(sdi_valid),
     .sdi_last(sdi_last),
     .sdi(sdi),
-    .cmd(cmd),
-    .cmd_valid(cmd_valid),
-    .cmd_ready(cmd_ready),
+    .cmdb(cmdb),
+    .cmdb_valid(cmdb_valid),
+    .cmdb_ready(cmdb_ready),
     .rx(rx),
     .rx_valid(rx_valid),
     .arbitration_valid(arbitration_valid),
@@ -172,15 +172,15 @@ module i3c_controller_core #(
   i_i3c_controller_bit_mod (
     .reset_n(reset_n),
     .clk(clk),
-    .cmd(cmd),
+    .cmdb(cmdb),
+    .cmdb_valid(cmdb_valid),
+    .cmdb_ready(cmdb_ready),
     .scl_pp_sg(rmap_pp_sg),
-    .cmd_valid(cmd_valid),
-    .cmd_ready(cmd_ready),
     .rx(rx),
     .rx_raw(rx_raw),
     .rx_valid(rx_valid),
-    .cmd_i2c_mode(cmd_i2c_mode),
-    .cmd_nop(cmd_nop),
+    .i2c_mode(i2c_mode),
+    .nop(nop),
     .scl(i3c_scl),
     .sdo(i3c_sdo),
     .sdi(i3c_sdi),
@@ -188,6 +188,6 @@ module i3c_controller_core #(
 
   assign ibi = {ibi_da, ibi_mdb};
   assign ibi_valid = ibi_tick;
-  assign cmdp_nop = cmd_nop;
+  assign cmdp_nop = nop;
 
 endmodule

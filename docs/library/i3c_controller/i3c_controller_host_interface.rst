@@ -10,9 +10,9 @@ access to a I3C Controller Control Interface.
 This is typically used in combination with a software program to dynamically
 generate I3C transactions.
 
-The peripheral has also support for providing memory-mapped access to one or more
-:ref:`i3c_controller offload-control-interface` cores and change its content
-dynamically at runtime.
+The peripheral also has support for providing memory-mapped access to one or more
+:ref:`i3c_controller offload-interface` cores and change its content dynamically at
+runtime.
 
 Files
 --------------------------------------------------------------------------------
@@ -37,6 +37,33 @@ Signal and Interface Pins
 --------------------------------------------------------------------------------
 
 .. hdl-interfaces::
+
+   * - s_axi_aclk
+     - All ``s_axi`` signals and ``irq`` are synchronous to this clock.
+   * - s_axi_aresetn
+     - Synchronous active-low reset.
+       Resets the internal state of the peripheral.
+   * - s_axi
+     - AXI-Lite bus slave.
+       Memory-mapped AXI-lite bus that provides access to modules register map.
+   * - irq
+     - Level-High Interrupt.
+       Interrupt output of the module. Is asserted when at least one of the
+       modules interrupt is pending and unmasked.
+   * - offload_trigger
+     - On offload operation, assert to start a burst.
+   * - sdio
+     - Group of byte stream interfaces (``SDI``, ``SDO``, and ``IBI``),
+       internally connected to thei respective FIFOs.
+   * - offload
+     - SDI output of the :ref:`i3c_controller offload-interface`,
+       generally consumed to a DMA.
+   * - cmdp
+     - Parsed :ref:`i3c_controller command_descriptors` to instruct the
+       :ref:`i3c_controller core`.
+   * - rmap
+     - Interface give the :ref:`i3c_controller core` access to some register map
+       addresses.
 
 Register Map
 --------------------------------------------------------------------------------
@@ -68,7 +95,7 @@ asserted when:
 * ``SDO_ALMOST_EMPTY``: the level falls bellow the almost empty level.
 * ``SDI_ALMOST_FULL``: the level rises above the almost full level.
 * ``IBI_ALMOST_FULL``: the level rises above the almost full level.
-* ``CMDR_PENDING``: a new synchronization event arrives.
+* ``CMDR_PENDING``: a new :ref:`i3c_controller cmdr` event arrives.
 * ``IBI_PENDING``: a new IBI event arrives.
 * ``DAA_PENDING``: a peripheral requested an address during the DAA.
 
@@ -98,14 +125,9 @@ FIFO Threshold Interrupts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The FIFO threshold interrupts can be used by software for flow control of the
-streams.
-
-If an application wants to send more data than what fits into the FIFO can write
-samples into the FIFO until it is full then suspend operation wait for the almost
-empty interrupt and continue writing data to the FIFO.
-Similarly, when the application wants to read more data than what fits into FIFO
-it should listen for the almost full interrupt and read data from the FIFO when
-it occurs.
+streams, for example,
+listen to the FIFO level interrupts during data transfer to and from the FIFOs
+to avoid data loss.
 
 The FIFO threshold interrupt is asserted when then FIFO level rises above the
 watermark and is automatically de-asserted when the level drops below the
@@ -114,7 +136,7 @@ watermark.
 Pending Interrupts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The pending interrupts ``*_PENDING`` is asserted when a new sync event is received
+The pending interrupt ``*_PENDING`` is asserted when a new sync event is received
 from a stream.
 For information about the ``CMDR`` see :ref:`i3c_controller cmdr`, and about the
 ``IBI`` see :ref:`i3c_controller ibi`.

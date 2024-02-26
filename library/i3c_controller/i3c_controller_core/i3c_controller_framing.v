@@ -34,7 +34,7 @@
 // ***************************************************************************
 /**
  * Frames commands to the word module.
- * That means, cojoins cmdp and sdio bus into single interface cmdw.
+ * That means, joins cmdp and sdio bus into single interface cmdw.
  * It is the main state-machine for the Command Descriptors received.
  *
  * The Dynamic Address Assigment (DAA) procedure is:
@@ -53,7 +53,7 @@
  *
  * Notes
  * From A with ACK, continue flow to B, or with NACK, goto C Stop,
- * finishing the DAA. At B, goto on sm state before A, Sr.
+ * finishing the DAA. At B, goto on st state before A, Sr.
  * The first and last ACK are mandatory in the flowchart, if a NACK is received,
  * it is considered an error and the module resets.
  * The whole DAA occurs in OD, hence the Start as Sr in the SM below.
@@ -61,13 +61,13 @@
 
 `timescale 1ns/100ps
 
-`include "i3c_controller_word_cmd.v"
+`include "i3c_controller_word.vh"
 
 module i3c_controller_framing #(
   parameter MAX_DEVS = 16
 ) (
-  input clk,
-  input reset_n,
+  input         clk,
+  input         reset_n,
 
   // Command parsed
 
@@ -79,46 +79,66 @@ module i3c_controller_framing #(
 
   // Byte stream
 
-  output sdo_ready,
-  input  sdo_valid,
-  input  [7:0] sdo,
+  output        sdo_ready,
+  input         sdo_valid,
+  input  [7:0]  sdo,
 
   // Word command
 
-  output cmdw_valid,
-  input  cmdw_ready,
   output [`CMDW_HEADER_WIDTH+8:0] cmdw,
-  input  cmdw_nack_bcast,
-  input  cmdw_nack_resp,
+  output        cmdw_valid,
+  input         cmdw_ready,
+  input         cmdw_nack_bcast,
+  input         cmdw_nack_resp,
 
   // Raw SDO input
 
-  input rx_raw,
+  input         rx_raw,
 
-  input  cmd_nop,
-  output reg cmd_i2c_mode,
+  input         nop,
+  output reg    i2c_mode,
 
   // IBI interface
 
-  input       arbitration_valid,
-  output      ibi_dev_is_attached,
-  output      ibi_bcr_2,
-  input       ibi_requested,
-  output reg  ibi_requested_auto,
-  input [6:0] ibi_da,
+  input         arbitration_valid,
+  output        ibi_dev_is_attached,
+  output        ibi_bcr_2,
+  input         ibi_requested,
+  output reg    ibi_requested_auto,
+  input [6:0]   ibi_da,
 
   // uP accessible info
 
-  input  [1:0] rmap_ibi_config,
-  output [6:0] rmap_dev_char_addr,
-  input  [3:0] rmap_dev_char_data
+  input  [1:0]  rmap_ibi_config,
+  output [6:0]  rmap_dev_char_addr,
+  input  [3:0]  rmap_dev_char_data
 );
 
-  localparam IDLE_BUS_WIDTH = 7;
+  reg [`CMDW_HEADER_WIDTH:0] st;
+  reg [IDLE_BUS_WIDTH:0] idle_bus_reg;
+  reg        cmdp_ccc_reg;
+  reg        cmdp_ccc_bcast_reg;
+  reg [6:0]  cmdp_ccc_id_reg;
+  reg        cmdp_bcast_header_reg;
+  reg        cmdp_sr_reg;
+  reg [11:0] cmdp_buffer_len_reg;
+  reg [6:0]  cmdp_da_reg;
+  reg        cmdp_rnw_reg;
+  reg        cmdp_valid_reg;
+  reg [7:0]  cmdw_body;
+  reg        ctrl_daa;
+  reg        ctrl_validate;
+  reg [3:0]  j;
+  reg [2:0]  dev_char_len;
+  reg        daa_trigger;
+  reg        error_nack_bcast;
+  reg        error_unknown_da;
+  reg        error_nack_resp ;
+  reg [2:0]  sm;
 
-  wire ibi_enable;
-  wire ibi_auto;
-
+  wire        idle_bus;
+  wire        ibi_enable;
+  wire        ibi_auto;
   wire        cmdp_rnw;
   wire [6:0]  cmdp_da;
   wire [11:0] cmdp_buffer_len;
@@ -127,60 +147,36 @@ module i3c_controller_framing #(
   wire        cmdp_ccc;
   wire [6:0]  cmdp_ccc_id;
   wire        cmdp_ccc_bcast;
+  wire        dev_is_attached;
+  wire        dev_is_i2c;
 
-  reg        cmdp_ccc_reg;
-  reg        cmdp_ccc_bcast_reg;
-  (* mark_debug = "true" *) reg [6:0]  cmdp_ccc_id_reg;
-  reg        cmdp_bcast_header_reg;
-  reg        cmdp_sr_reg;
-  reg [11:0] cmdp_buffer_len_reg;
-  reg [6:0]  cmdp_da_reg;
-  reg        cmdp_rnw_reg;
-  reg        cmdp_valid_reg;
+  localparam IDLE_BUS_WIDTH = 7;
 
-  wire dev_is_attached;
-  wire dev_is_i2c;
+  localparam [2:0] SM_SETUP       = 0;
+  localparam [2:0] SM_VALIDATE    = 1;
+  localparam [2:0] SM_TRANSFER    = 2;
+  localparam [2:0] SM_SETUP_SDO   = 3;
+  localparam [2:0] SM_CLEANUP     = 4;
+  localparam [2:0] SM_ARBITRATION = 5;
 
-  reg [`CMDW_HEADER_WIDTH:0] sm;
-  reg [7:0] cmdw_body;
-  reg ctrl_daa;
-  reg ctrl_validate;
-  reg [3:0] j;
-
-  reg [2:0] dev_char_len;
-  reg daa_trigger;
-  reg error_nack_bcast;
-  reg error_unknown_da;
-  reg error_nack_resp ;
-
-  reg [2:0] smt;
-  localparam [2:0]
-    setup       = 0,
-    validate    = 1,
-    transfer    = 2,
-    setup_sdo   = 3,
-    cleanup     = 4,
-    arbitration = 5;
-
-  localparam [6:0]
-    CCC_ENTDAA = 'h07;
+  localparam [6:0] CCC_ENTDAA = 'h07;
 
   always @(posedge clk) begin
     error_unknown_da <= 1'b0;
     if (!reset_n) begin
       j <= 0;
-      sm  <= `CMDW_NOP;
-      smt <= setup;
+      st  <= `CMDW_NOP;
+      sm <= SM_SETUP;
       ctrl_daa <= 1'b0;
       ibi_requested_auto <= 1'b0;
       cmdp_sr_reg <= 0;
       daa_trigger <= 1'b0;
-      cmd_i2c_mode <= 1'b0;
+      i2c_mode <= 1'b0;
     end else if (cmdw_nack_bcast | cmdw_nack_resp) begin
       j <= 0;
-      sm  <= `CMDW_NOP;
-      smt <= cmdp_ccc_id_reg == CCC_ENTDAA ? setup :
-             cmdp_rnw_reg ? setup : cleanup;
+      st  <= `CMDW_NOP;
+      sm <= cmdp_ccc_id_reg == CCC_ENTDAA ? SM_SETUP :
+             cmdp_rnw_reg ? SM_SETUP : SM_CLEANUP;
       ctrl_daa <= 1'b0;
     end else begin
 
@@ -193,22 +189,22 @@ module i3c_controller_framing #(
 
       // SDI Ready is are not checked, data will be lost
       // if it do not accept/provide data when needed.
-      case (smt)
-        setup: begin
+      case (sm)
+        SM_SETUP: begin
           j <= 0;
-          cmd_i2c_mode <= 1'b0;
+          i2c_mode <= 1'b0;
           // Condition where a peripheral requested a IBI during quiet times.
           if (cmdp_valid) begin
             cmdp_sr_reg <= cmdp_sr;
-            // Look last transfer SR flag.
-            sm <= cmdp_sr_reg ? `CMDW_MSG_SR : `CMDW_START;
+            // Look last SM_TRANSFER SR flag.
+            st <= cmdp_sr_reg ? `CMDW_MSG_SR : `CMDW_START;
             // CCC Broadcast casts to all devices, validation not required.
             // Direct is CCC_BCAST 1'b1
-            smt <= cmdp_ccc & ~cmdp_ccc_bcast ? transfer : validate;
+            sm <= cmdp_ccc & ~cmdp_ccc_bcast ? SM_TRANSFER : SM_VALIDATE;
             ctrl_validate <= 1'b0;
           end else if (ibi_auto & ibi_enable & rx_raw === 1'b0 & idle_bus) begin
-            sm <= `CMDW_BCAST_7E_W0;
-            smt <= transfer;
+            st <= `CMDW_BCAST_7E_W0;
+            sm <= SM_TRANSFER;
             ibi_requested_auto <= 1'b1;
           end
           cmdp_valid_reg        <= cmdp_valid;
@@ -219,170 +215,170 @@ module i3c_controller_framing #(
           cmdp_buffer_len_reg   <= cmdp_buffer_len;
           cmdp_da_reg           <= cmdp_da;
           cmdp_rnw_reg          <= cmdp_rnw;
-          end
-        validate: begin
+        end
+        SM_VALIDATE: begin
           // Provide one clock cycle to read the BRAM and improve timing.
           ctrl_validate <= 1'b1;
           if (ctrl_validate) begin
             if (dev_is_i2c) begin
-              cmd_i2c_mode <= 1'b1;
+              i2c_mode <= 1'b1;
             end else begin
-              cmd_i2c_mode <= 1'b0;
+              i2c_mode <= 1'b0;
             end
             if (dev_is_attached) begin
-              smt <= transfer;
+              sm <= SM_TRANSFER;
             end else begin
               error_unknown_da <= 1'b1;
-              smt <= cmdp_rnw_reg ? setup : cleanup;
+              sm <= cmdp_rnw_reg ? SM_SETUP : SM_CLEANUP;
             end
-            end
+          end
         end
-        transfer: begin
+        SM_TRANSFER: begin
           if (cmdw_ready) begin
             ibi_requested_auto <= 1'b0;
-            case(sm)
+            case(st)
               `CMDW_NOP: begin
-                smt <= setup;
+                sm <= SM_SETUP;
                 ctrl_daa <= 1'b0;
-                end
+              end
               `CMDW_SR,
               `CMDW_START: begin
                 cmdw_body <= {cmdp_da, cmdp_rnw}; // Attention to RnW here
-                sm <= ctrl_daa ? `CMDW_BCAST_7E_W1 :
+                st <= ctrl_daa ? `CMDW_BCAST_7E_W1 :
                       (~cmdp_bcast_header_reg & ~cmdp_ccc_reg) | dev_is_i2c ? `CMDW_TARGET_ADDR_OD :
                       `CMDW_BCAST_7E_W0;
-                end
+              end
               `CMDW_BCAST_7E_W0: begin
-                smt <= arbitration;
+                sm <= SM_ARBITRATION;
                 cmdw_body <= {cmdp_ccc_bcast_reg, cmdp_ccc_id_reg}; // Attention to BCAST here
-                end
+              end
               `CMDW_CCC_OD: begin
                 // Occurs only during the DAA
-                sm <= `CMDW_START;
+                st <= `CMDW_START;
                 ctrl_daa <= 1'b1;
-                end
+              end
               `CMDW_CCC_PP: begin
                 if (cmdp_ccc_bcast_reg) begin
-                  sm <= `CMDW_MSG_SR;
+                  st <= `CMDW_MSG_SR;
                 end else if (~|cmdp_buffer_len_reg) begin
-                  sm  <= `CMDW_STOP_PP;
+                  st  <= `CMDW_STOP_PP;
                   if (cmdp_sr_reg) begin
-                    smt <= setup;
+                    sm <= SM_SETUP;
                   end
                 end else begin
-                  sm <= `CMDW_MSG_TX;
-                  smt <= setup_sdo;
+                  st <= `CMDW_MSG_TX;
+                  sm <= SM_SETUP_SDO;
                   cmdp_buffer_len_reg <= cmdp_buffer_len_reg - 1;
                 end
-                end
+              end
               `CMDW_BCAST_7E_W1: begin
                 // Occurs only during the DAA
                 dev_char_len <= 7;
-                sm <= `CMDW_DAA_DEV_CHAR;
-                end
+                st <= `CMDW_DAA_DEV_CHAR;
+              end
               `CMDW_DAA_DEV_CHAR: begin
                 dev_char_len <= dev_char_len - 1;
                 if (~|dev_char_len) begin
-                  sm  <= `CMDW_DYN_ADDR;
-                  smt <= setup_sdo;
+                  st  <= `CMDW_DYN_ADDR;
+                  sm <= SM_SETUP_SDO;
                   daa_trigger <= 1'b1;
                 end
-                end
+              end
               `CMDW_DYN_ADDR: begin
-                sm <= j == MAX_DEVS - 1 ? `CMDW_STOP_OD : `CMDW_START;
-                end
+                st <= j == MAX_DEVS - 1 ? `CMDW_STOP_OD : `CMDW_START;
+              end
               `CMDW_MSG_SR: begin
                 cmdw_body <= {cmdp_da, cmdp_rnw}; // Be aware of RnW here
-                sm <= dev_is_i2c ? `CMDW_TARGET_ADDR_OD : `CMDW_TARGET_ADDR_PP;
-                end
+                st <= dev_is_i2c ? `CMDW_TARGET_ADDR_OD : `CMDW_TARGET_ADDR_PP;
+              end
               `CMDW_TARGET_ADDR_OD,
               `CMDW_TARGET_ADDR_PP: begin
                 if (cmdp_rnw_reg) begin
-                  sm <= dev_is_i2c ? `CMDW_I2C_RX : `CMDW_MSG_RX;
+                  st <= dev_is_i2c ? `CMDW_I2C_RX : `CMDW_MSG_RX;
                 end else begin
-                  sm <= dev_is_i2c ? `CMDW_I2C_TX : `CMDW_MSG_TX;
-                  smt <= setup_sdo;
+                  st <= dev_is_i2c ? `CMDW_I2C_TX : `CMDW_MSG_TX;
+                  sm <= SM_SETUP_SDO;
                 end
                 cmdp_buffer_len_reg <= cmdp_buffer_len_reg - 1;
-                end
+              end
               `CMDW_I2C_RX,
               `CMDW_MSG_RX: begin
                 // I²C read transfers cannot be stopped by the peripheral.
                 cmdp_buffer_len_reg <= cmdp_buffer_len_reg - 1;
                 if (~|cmdp_buffer_len_reg) begin
-                  sm  <= dev_is_i2c ? `CMDW_STOP_OD :`CMDW_STOP_PP;
+                  st  <= dev_is_i2c ? `CMDW_STOP_OD :`CMDW_STOP_PP;
                   if (cmdp_sr_reg) begin
-                    smt <= setup;
+                    sm <= SM_SETUP;
                   end
                 end
-                end
+              end
               `CMDW_I2C_TX,
               `CMDW_MSG_TX: begin
                 cmdp_buffer_len_reg <= cmdp_buffer_len_reg - 1;
                 if (~|cmdp_buffer_len_reg) begin
-                  sm  <= dev_is_i2c ? `CMDW_STOP_OD :`CMDW_STOP_PP;
+                  st  <= dev_is_i2c ? `CMDW_STOP_OD :`CMDW_STOP_PP;
                   if (cmdp_sr_reg) begin
-                    smt <= setup;
+                    sm <= SM_SETUP;
                   end
                 end else begin
-                  smt <= setup_sdo;
+                  sm <= SM_SETUP_SDO;
                 end
-                end
+              end
               `CMDW_STOP_OD,
               `CMDW_STOP_PP: begin
-                smt <= setup;
-                sm <= `CMDW_NOP;
+                sm <= SM_SETUP;
+                st <= `CMDW_NOP;
                 cmdp_sr_reg <= 1'b0;
-                end
+              end
               `CMDW_IBI_MDB: begin
-                sm <= cmdp_valid_reg ? `CMDW_SR : `CMDW_STOP_PP;
-                end
+                st <= cmdp_valid_reg ? `CMDW_SR : `CMDW_STOP_PP;
+              end
               default: begin
-                sm <= `CMDW_NOP;
-                end
+                st <= `CMDW_NOP;
+              end
             endcase
           end
         end
-        setup_sdo: begin
+        SM_SETUP_SDO: begin
           if (sdo_valid) begin
-            smt <= transfer;
+            sm <= SM_TRANSFER;
           end
           cmdw_body <= sdo;
-          end
-        cleanup: begin
-          // The peripheral did not ACK the transfer, so it is cancelled.
-          // the SDO data is discarted
+        end
+        SM_CLEANUP: begin
+          // The peripheral did not ACK the SM_TRANSFER, so it is cancelled.
+          // the SDO data is discarded
           if (sdo_valid) begin
             cmdp_buffer_len_reg <= cmdp_buffer_len_reg - 1;
           end
           if (cmdp_buffer_len_reg == 0) begin
-            smt <= setup;
+            sm <= SM_SETUP;
           end
-          end
-        arbitration: begin
+        end
+        SM_ARBITRATION: begin
           if (arbitration_valid) begin
-            smt <= transfer;
+            sm <= SM_TRANSFER;
             // IBI requested during CMDW_BCAST_7E_W0.
             // At the word module, was ACKed if IBI is enabled and DA is known, if not, NACKed.
             if (ibi_requested) begin
               // Receive MSB if IBI is enabled, dev is known and BCR[2] is 1'b1.
               if (dev_is_attached & ibi_enable & ibi_bcr_2) begin
-                sm <= `CMDW_IBI_MDB;
+                st <= `CMDW_IBI_MDB;
               end else begin
-                sm <= cmdp_valid_reg ? `CMDW_START : `CMDW_STOP_OD;
+                st <= cmdp_valid_reg ? `CMDW_START : `CMDW_STOP_OD;
               end
             // No IBI requested during CMDW_BCAST_7E_W0.
             end else if (cmdp_valid_reg) begin
-              sm <= cmdp_ccc_reg ?
+              st <= cmdp_ccc_reg ?
                     (cmdp_ccc_id_reg == CCC_ENTDAA ? `CMDW_CCC_OD : `CMDW_CCC_PP) : `CMDW_MSG_SR;
             end else begin
-              sm <= `CMDW_STOP_OD;
+              st <= `CMDW_STOP_OD;
             end
           end
-          end
+        end
         default: begin
-          smt <= setup;
-          end
+          sm <= SM_SETUP;
+        end
       endcase
     end
     // Improve timing
@@ -392,10 +388,8 @@ module i3c_controller_framing #(
 
   // Idle bus condition
 
-  wire idle_bus;
-  reg [IDLE_BUS_WIDTH:0] idle_bus_reg;
   always @(posedge clk) begin
-    if (!reset_n || !cmd_nop) begin
+    if (!reset_n || !nop) begin
       idle_bus_reg <= 0;
     end else if (!idle_bus) begin
       idle_bus_reg <= idle_bus_reg + 1;
@@ -412,10 +406,10 @@ module i3c_controller_framing #(
   assign ibi_dev_is_attached = dev_is_attached;
   assign rmap_dev_char_addr  = ibi_requested ? ibi_da : cmdp_da_reg;
 
-  assign cmdp_ready = smt == setup & !cmdw_nack_bcast & !cmdw_nack_resp & reset_n;
-  assign sdo_ready = (smt == setup_sdo | smt == cleanup) & !cmdw_nack_bcast & !cmdw_nack_resp & reset_n;
-  assign cmdw = {sm, cmdw_body};
-  assign cmdw_valid = smt == transfer;
+  assign cmdp_ready = sm == SM_SETUP & !cmdw_nack_bcast & !cmdw_nack_resp & reset_n;
+  assign sdo_ready = (sm == SM_SETUP_SDO | sm == SM_CLEANUP) & !cmdw_nack_bcast & !cmdw_nack_resp & reset_n;
+  assign cmdw = {st, cmdw_body};
+  assign cmdw_valid = sm == SM_TRANSFER;
 
   assign ibi_enable = rmap_ibi_config[0];
   assign ibi_auto   = rmap_ibi_config[1];

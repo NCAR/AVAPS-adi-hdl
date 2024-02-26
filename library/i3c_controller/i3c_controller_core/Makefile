@@ -7,13 +7,12 @@
 LIBRARY_NAME := i3c_controller_core
 
 GENERIC_DEPS += i3c_controller_bit_mod.v
-GENERIC_DEPS += i3c_controller_bit_mod_cmd.v
+GENERIC_DEPS += i3c_controller_bit_mod.vh
 GENERIC_DEPS += i3c_controller_core.v
 GENERIC_DEPS += i3c_controller_framing.v
 GENERIC_DEPS += i3c_controller_word.v
-GENERIC_DEPS += i3c_controller_word_cmd.v
+GENERIC_DEPS += i3c_controller_word.vh
 
-XILINX_DEPS += i3c_controller_core_constr.ttcl
 XILINX_DEPS += i3c_controller_core_ip.tcl
 
 XILINX_DEPS += ../../i3c_controller/interfaces/i3c_controller.xml

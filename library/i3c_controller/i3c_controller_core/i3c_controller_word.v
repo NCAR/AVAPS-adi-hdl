@@ -34,17 +34,17 @@
 // ***************************************************************************
 /**
  * Executes Word Commands received by the framing module.
- * Each state has linear substates counted in Bit Modulation Commands.
+ * Each state has linear sub-states counted in Bit Modulation Commands.
  */
 
 `timescale 1ns/100ps
 
-`include "i3c_controller_word_cmd.v"
-`include "i3c_controller_bit_mod_cmd.v"
+`include "i3c_controller_word.vh"
+`include "i3c_controller_bit_mod.vh"
 
 module i3c_controller_word (
-  input clk,
-  input reset_n,
+  input      clk,
+  input      reset_n,
 
   // Word command
 
@@ -63,14 +63,14 @@ module i3c_controller_word (
 
   // Bit Modulation Command
 
-  output [`MOD_BIT_CMD_WIDTH:0] cmd,
-  output cmd_valid,
-  input  cmd_ready,
+  output [`MOD_BIT_CMD_WIDTH:0] cmdb,
+  output       cmdb_valid,
+  input        cmdb_ready,
 
   // RX and ACK
 
-  input rx,
-  input rx_valid,
+  input        rx,
+  input        rx_valid,
 
   // IBI interface
 
@@ -85,40 +85,38 @@ module i3c_controller_word (
 
   // uP accessible info
 
-  input [1:0] rmap_ibi_config
+  input [1:0]  rmap_ibi_config
 );
+
+  reg [`CMDW_HEADER_WIDTH:0] st;
+  reg [`MOD_BIT_CMD_WIDTH:2] cmd_r;
+  reg [1:0] sm;
+  reg       sg;
+  reg [7:0] cmdw_body;
+  reg       cmdw_nacked;
+  reg [7:0] ibi_da_reg;
+  reg [7:0] ibi_mdb_reg;
+  reg       do_ack;  // Peripheral did NACK?
+  reg       do_rx_t; // Peripheral end Message at T in Read Data?
+  reg       cmd_wr;
+  reg       sdi_last_reg;
+  reg [5:0] i;
+  reg [5:0] i_;
 
   wire ibi_enable;
   wire cmdw_nack;
   wire [`CMDW_HEADER_WIDTH:0] cmdw_header;
 
-  reg sg;
-  reg [7:0] cmdw_body;
-  reg       cmdw_nacked;
-  reg [7:0] ibi_da_reg;
-  reg [7:0] ibi_mdb_reg;
-  reg do_ack; // Peripheral did NACK?
-  reg do_rx_t; // Peripheral end Message at T in Read Data?
-  reg cmd_wr;
-  reg sdi_last_reg;
-  reg [`CMDW_HEADER_WIDTH:0] sm;
-  reg [`MOD_BIT_CMD_WIDTH:2] cmd_r;
-  reg [5:0] i;
-  reg [5:0] i_;
+  localparam [6:0] I3C_RESERVED = 7'h7e;
 
-  localparam [6:0]
-    I3C_RESERVED = 7'h7e;
-
-  reg [1:0] smt;
-  localparam [1:0]
-    get        = 0,
-    setup      = 1,
-    transfer   = 2,
-    resolve    = 3;
+  localparam [1:0] SM_GET      = 0;
+  localparam [1:0] SM_SETUP    = 1;
+  localparam [1:0] SM_TRANSFER = 2;
+  localparam [1:0] SM_RESOLVE  = 3;
 
   // # of Bit Modulation Commands - 1 per word
-  always @(sm) begin
-    case (sm)
+  always @(st) begin
+    case (st)
       `CMDW_NOP             : i_ =  0;
       `CMDW_START           : i_ =  0;
       `CMDW_BCAST_7E_W0     : i_ =  8; // 7'h7e+RnW=0+ACK / DA+RnW=1+ACK_IBI
@@ -141,8 +139,8 @@ module i3c_controller_word (
       default               : i_ =  0;
     endcase
 
-    // Set open drain or push-pull for each word.
-    case (sm)
+    // Set speed grade (open drain or push-pull) for each word.
+    case (st)
       `CMDW_NOP             : sg = 0;
       `CMDW_START           : sg = 0;
       `CMDW_BCAST_7E_W0     : sg = 0;
@@ -173,35 +171,35 @@ module i3c_controller_word (
     arbitration_valid <= 1'b0;
     if (!reset_n) begin
       i <= 0;
-      smt <= get;
+      sm <= SM_GET;
       cmd_wr <= 1'b0;
-      sm <= `CMDW_NOP;
+      st <= `CMDW_NOP;
       ibi_requested <= 1'b0;
       cmd_r <= `MOD_BIT_CMD_NOP_;
     end else begin
-      case (smt)
-        get: begin
+      case (sm)
+        SM_GET: begin
           if (cmdw_valid) begin
-            smt <= setup;
+            sm <= SM_SETUP;
           end
-         sm <= cmdw_header;
-         cmdw_body <= cmdw[7:0];
-         ibi_requested <= ibi_requested_auto;
-         i <= 0;
-         cmdw_nacked <= 1'b0;
-         end
-        setup: begin
-            smt <= transfer;
+          st <= cmdw_header;
+          cmdw_body <= cmdw[7:0];
+          ibi_requested <= ibi_requested_auto;
+          i <= 0;
+          cmdw_nacked <= 1'b0;
+        end
+        SM_SETUP: begin
+            sm <= SM_TRANSFER;
             do_ack  <= 1'b0;
             do_rx_t <= 1'b0;
 
-            case (sm)
+            case (st)
               `CMDW_NOP: begin
                 cmd_r <= `MOD_BIT_CMD_NOP_;
-                end
+              end
               `CMDW_START: begin
                 cmd_r <= `MOD_BIT_CMD_START_;
-                end
+              end
               `CMDW_BCAST_7E_W0: begin
                 // During the header broadcast, the peripheral shall issue an IBI, due
                 // to this the SDO is monitored and if the controller loses arbitration,
@@ -226,7 +224,7 @@ module i3c_controller_word (
                   // 6'b111111
                   cmd_r <= `MOD_BIT_CMD_READ_;
                 end
-                end
+              end
               `CMDW_BCAST_7E_W1: begin
                 if (i == 7) begin
                   // RnW=1
@@ -241,7 +239,7 @@ module i3c_controller_word (
                   cmd_r  <= `MOD_BIT_CMD_WRITE_;
                   cmd_wr <= I3C_RESERVED[6 - i[2:0]];
                 end
-                end
+              end
               `CMDW_DYN_ADDR,
               `CMDW_TARGET_ADDR_OD,
               `CMDW_TARGET_ADDR_PP: begin
@@ -254,14 +252,14 @@ module i3c_controller_word (
                   cmd_r  <= `MOD_BIT_CMD_WRITE_;
                   cmd_wr <= cmdw_body[7 - i[2:0]];
                 end
-                end
+              end
               `CMDW_SR,
               `CMDW_MSG_SR: begin
                 cmd_r <= `MOD_BIT_CMD_START_;
-                end
+              end
               `CMDW_I2C_RX: begin
                 if (i == 8) begin
-                  // In I2C, the peripheral cannot stop the transfer.
+                  // In I2C, the peripheral cannot stop the SM_TRANSFER.
                   cmd_r <= `MOD_BIT_CMD_WRITE_;
                   if (sdi_ready) begin
                     cmd_wr <= 1'b0; // ACK
@@ -272,14 +270,14 @@ module i3c_controller_word (
                   // SDI
                   cmd_r <= `MOD_BIT_CMD_READ_;
                 end
-                end
+              end
               `CMDW_MSG_RX: begin
                 if (i == 8) begin
                   // T
                   if (sdi_ready) begin
                     if (cmdw_header == `CMDW_STOP_PP) begin
                       // Peek next command to see if the controller wishes to
-                      // end the transfer.
+                      // end the SM_TRANSFER.
                       cmd_r <= `MOD_BIT_CMD_START_;
                     end else begin
                       // continue, if peripheral wishes to do so
@@ -293,7 +291,7 @@ module i3c_controller_word (
                   // SDI
                   cmd_r <= `MOD_BIT_CMD_READ_;
                 end
-                end
+              end
               `CMDW_I2C_TX: begin
                 if (i == 8) begin
                   // ACK
@@ -304,7 +302,7 @@ module i3c_controller_word (
                   cmd_r  <= `MOD_BIT_CMD_WRITE_;
                   cmd_wr <= cmdw_body[7 - i[2:0]];
                 end
-                end
+              end
               `CMDW_CCC_OD,
               `CMDW_CCC_PP,
               `CMDW_MSG_TX: begin
@@ -317,14 +315,14 @@ module i3c_controller_word (
                   cmd_r  <= `MOD_BIT_CMD_WRITE_;
                   cmd_wr <= cmdw_body[7 - i[2:0]];
                 end
-                end
+              end
               `CMDW_STOP_OD,
               `CMDW_STOP_PP: begin
                 cmd_r <= `MOD_BIT_CMD_STOP_;
-                end
+              end
               `CMDW_DAA_DEV_CHAR: begin
                 cmd_r <= `MOD_BIT_CMD_READ_;
-                end
+              end
               `CMDW_IBI_MDB: begin
                 if (i == 8) begin
                   // T
@@ -333,41 +331,41 @@ module i3c_controller_word (
                   // MDB
                   cmd_r <= `MOD_BIT_CMD_READ_;
                 end
-                end
+              end
               default: begin
-                sm <= `CMDW_NOP;
-                end
+                st <= `CMDW_NOP;
+              end
             endcase
         end
-        transfer: begin
-          if (cmd_ready) begin
-            smt <= resolve;
+        SM_TRANSFER: begin
+          if (cmdb_ready) begin
+            sm <= SM_RESOLVE;
           end
-          end
-        resolve: begin
+        end
+        SM_RESOLVE: begin
           if (rx_valid) begin
             i <= i + 1;
             if (i == i_ | cmdw_nacked) begin
-              smt <= get;
+              sm <= SM_GET;
             end else begin
-              smt <= setup;
+              sm <= SM_SETUP;
             end
 
             // Condition to end rx stream:
             // * Check if cmdw changed by peeking next cmd earlier
             // * Peripheral NACKed
-            if ((i == i_ & sm != cmdw_header) | cmdw_nack) begin
+            if ((i == i_ & st != cmdw_header) | cmdw_nack) begin
               sdi_last_reg <= 1'b1;
             end
 
             if (cmdw_nack) begin
-              sm <= sg ? `CMDW_STOP_PP : `CMDW_STOP_OD;
-              smt <= setup;
+              st <= sg ? `CMDW_STOP_PP : `CMDW_STOP_OD;
+              sm <= SM_SETUP;
               cmdw_nacked <= 1'b1;
             end
 
             ibi_requested <= 1'b0;
-            case (sm)
+            case (st)
               `CMDW_NOP,
               `CMDW_START : begin
                 ibi_requested <= ibi_requested;
@@ -382,50 +380,50 @@ module i3c_controller_word (
                     ibi_tick <= 1'b1;
                   end
                 end
-                end
+              end
               `CMDW_DAA_DEV_CHAR,
               `CMDW_I2C_RX,
               `CMDW_MSG_RX: begin
                 if (i == i_) begin
                   sdi_valid <= 1'b1;
                 end
-                /* T-bit is discarted */
+                /* T-bit is discarded */
                 sdi[7-i] <= rx;
-                end
+              end
               `CMDW_IBI_MDB: begin
                 if (i[2:0] == 7) begin
                   ibi_tick <= 1'b1;
                 end
                 ibi_mdb_reg[7-i] <= rx;
-                end
+              end
               default: begin
-                end
+              end
             endcase
           end
         end
       endcase
     end
-    cmdw_nack_bcast <= cmdw_nack && sm == `CMDW_BCAST_7E_W0;
-    cmdw_nack_resp  <= cmdw_nack && sm != `CMDW_BCAST_7E_W0;
+    cmdw_nack_bcast <= cmdw_nack && st == `CMDW_BCAST_7E_W0;
+    cmdw_nack_resp  <= cmdw_nack && st != `CMDW_BCAST_7E_W0;
   end
 
-  assign cmdw_nack = smt == resolve & rx_valid ?
-                     (sm == `CMDW_DYN_ADDR ||
-                      sm == `CMDW_TARGET_ADDR_OD ||
-                      sm == `CMDW_TARGET_ADDR_PP ||
-                      sm == `CMDW_BCAST_7E_W1 ||
-                      sm == `CMDW_BCAST_7E_W0 ||
-                      sm == `CMDW_I2C_RX) ? (do_ack  & rx !== 1'b0) :
-                     (sm == `CMDW_MSG_RX) ? (do_rx_t & rx === 1'b0) : 1'b0 : 1'b0;
+  assign cmdw_nack = sm == SM_RESOLVE & rx_valid ?
+                     (st == `CMDW_DYN_ADDR ||
+                      st == `CMDW_TARGET_ADDR_OD ||
+                      st == `CMDW_TARGET_ADDR_PP ||
+                      st == `CMDW_BCAST_7E_W1 ||
+                      st == `CMDW_BCAST_7E_W0 ||
+                      st == `CMDW_I2C_RX) ? (do_ack  & rx !== 1'b0) :
+                     (st == `CMDW_MSG_RX) ? (do_rx_t & rx === 1'b0) : 1'b0 : 1'b0;
 
-  assign cmdw_ready = smt == get;
+  assign cmdw_ready = sm == SM_GET;
   assign cmdw_header = cmdw[`CMDW_HEADER_WIDTH+8 -: `CMDW_HEADER_WIDTH+1];
 
   assign ibi_da  = ibi_da_reg [7:1];
   assign ibi_mdb = ibi_mdb_reg;
   assign ibi_enable = rmap_ibi_config[0];
-  assign cmd_valid = smt == transfer;
-  assign cmd = {cmd_r, sg, cmd_wr};
+  assign cmdb_valid = sm == SM_TRANSFER;
+  assign cmdb = {cmd_r, sg, cmd_wr};
 
   assign sdi_last = sdi_valid & sdi_last_reg;
 

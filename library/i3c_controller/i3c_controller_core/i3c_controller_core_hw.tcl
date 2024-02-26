@@ -13,9 +13,9 @@ ad_ip_files i3c_controller_core [list \
   i3c_controller_core.v \
   i3c_controller_framing.v \
   i3c_controller_word.v \
-  i3c_controller_word_cmd.v \
+  i3c_controller_word.vh \
   i3c_controller_bit_mod.v \
-  i3c_controller_bit_mod_cmd.v \
+  i3c_controller_bit_mod.vh \
 ]
 
 # parameters

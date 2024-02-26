@@ -36,109 +36,110 @@
  * Parse commands.
  * When the first command indicates a pair command (e.g. CCC), await next
  * command to complete request (e.g. add CCC ID to parsed CCC command).
- * If it is a simple command (e.g. private transfer), a "blank" command
- * is not required.
- * cmdr (Command receipts) are transfered at the end of a transer, with
- * updated lenght field indicating the number of bytes actually transfered,
+ * If it is a simple command (e.g. private transfer), their is no pair command.
+ * Command receipts (cmdr) are transferred at the end of a transfer, with
+ * updated length field indicating the number of bytes actually transferred,
  * since the peripheral shall cancel the transfer.
  */
 
 `timescale 1ns/100ps
 
 module i3c_controller_cmd_parser (
-  input  clk,
-  input  reset_n,
+  input         clk,
+  input         reset_n,
 
   // Command FIFO
 
-  output cmd_ready,
-  input  cmd_valid,
+  output        cmd_ready,
+  input         cmd_valid,
   input  [31:0] cmd,
 
-  input  cmdr_ready,
-  output cmdr_valid,
+  input         cmdr_ready,
+  output        cmdr_valid,
   output [31:0] cmdr,
 
   // Command parsed
 
-  input          cmdp_ready,
-  output         cmdp_valid,
-  output  [30:0] cmdp,
-  input   [2:0]  cmdp_error,
+  input         cmdp_ready,
+  output        cmdp_valid,
+  output [30:0] cmdp,
+  input  [2:0]  cmdp_error,
 
-  output rd_bytes_stop,
+  output        rd_bytes_stop,
   input  [11:0] rd_bytes_lvl,
-  input  wr_bytes_stop,
+  input         wr_bytes_stop,
   input  [11:0] wr_bytes_lvl
 );
+
+  reg  [31:0] cmdr1;
+  reg  [7:0]  cmdr2;
+  reg  [3:0]  cmdr_error;
+  reg  [7:0]  cmdr_sync;
+
+  reg         error_nack_bcast_reg;
+  reg         error_nack_resp_reg;
+  reg         error_unknown_da_reg;
+
+  reg  [2:0]  sm;
+
+  reg         wr_bytes_stop_reg;
+  reg [11:0]  wr_bytes_lvl_reg;
+
   wire        cmdp_rnw;
   wire [11:0] cmdp_buffer_len;
   wire        cmdp_ccc;
   wire [6:0]  cmdp_ccc_id;
-  wire error_nack_bcast;
-  wire error_unknown_da;
-  wire error_nack_resp;
+  wire        error_nack_bcast;
+  wire        error_unknown_da;
+  wire        error_nack_resp;
 
   wire [11:0] cmdr1_len;
-  reg  [31:0] cmdr1;
-  reg  [7:0]  cmdr2;
-
-  reg error_nack_bcast_reg;
-  reg error_nack_resp_reg;
-  reg error_unknown_da_reg;
-
-  reg [3:0] cmdr_error;
-  reg [7:0] cmdr_sync;
 
   // Check bit 3 for any type of NACK (CE2_ERROR + NACK_RESP).
   // Check bit 4 for unknown address.
   // CE1_ERROR and CE3_ERROR are not implemented.
-  localparam [3:0]
-    NO_ERROR  = 4'd0,
-    CE0_ERROR = 4'd1,
-    CE2_ERROR = 4'd4,
-    NACK_RESP = 4'd6,
-    UDA_ERROR = 4'd8;
+  localparam [3:0] NO_ERROR  = 4'd0;
+  localparam [3:0] CE0_ERROR = 4'd1;
+  localparam [3:0] CE2_ERROR = 4'd4;
+  localparam [3:0] NACK_RESP = 4'd6;
+  localparam [3:0] UDA_ERROR = 4'd8;
 
-  localparam [6:0]
-    CCC_ENTDAA = 'h07;
+  localparam [6:0] CCC_ENTDAA = 'h07;
 
-  reg [2:0] sm;
-  localparam [2:0]
-    receive          = 0,
-    xfer_await       = 1,
-    xfer_await_ready = 2,
-    ccc_await        = 3,
-    pre_receipt      = 4,
-    receipt          = 5;
+  localparam [2:0] SM_RECEIVE         = 0;
+  localparam [2:0] SM_XFER_WAIT       = 1;
+  localparam [2:0] SM_XFER_WAIT_READY = 2;
+  localparam [2:0] SM_CCC_WAIT        = 3;
+  localparam [2:0] SM_PRE_RECEIPT     = 4;
+  localparam [2:0] SM_RECEIPT         = 5;
 
   always @(posedge clk) begin
     if (!reset_n) begin
-      sm  <= receive;
+      sm  <= SM_RECEIVE;
       cmdr_error <= NO_ERROR;
       cmdr_sync  <= 8'd0;
     end else begin
       case (sm)
-        receive: begin
+        SM_RECEIVE: begin
           cmdr_error <= NO_ERROR;
           cmdr2 <= 8'd0;
           if (cmd_valid) begin
             cmdr1 <= cmd;
             /* cmd[22] is cmdp_ccc */
-            sm <= cmd[22] ? ccc_await : xfer_await;
+            sm <= cmd[22] ? SM_CCC_WAIT : SM_XFER_WAIT;
           end else begin
-            sm <= receive;
+            sm <= SM_RECEIVE;
           end
           error_nack_bcast_reg <= 1'b0;
           error_unknown_da_reg <= 1'b0;
           error_nack_resp_reg  <= 1'b0;
+        end
+        SM_XFER_WAIT: begin
+          sm <= cmdp_ready ? SM_XFER_WAIT_READY : sm;
           end
-        xfer_await: begin
-          sm <= cmdp_ready ? xfer_await_ready : sm;
-          end
-        xfer_await_ready: begin
+        SM_XFER_WAIT_READY: begin
           if (cmdp_ready) begin
-            sm <= pre_receipt;
+            sm <= SM_PRE_RECEIPT;
           end
 
           if (error_nack_bcast) begin
@@ -150,14 +151,14 @@ module i3c_controller_cmd_parser (
           if (error_nack_resp) begin
             error_nack_resp_reg <= error_nack_resp;
           end
-          end
-        ccc_await: begin
+        end
+        SM_CCC_WAIT: begin
           cmdr2 <= cmd[7:0];
           if (cmd_valid) begin
-            sm <= xfer_await;
+            sm <= SM_XFER_WAIT;
           end
-          end
-        pre_receipt: begin
+        end
+        SM_PRE_RECEIPT: begin
           // CE1_ERROR and CE3_ERROR not implemented.
           if (cmdp_ccc & |wr_bytes_lvl) begin
             cmdr_error <= CE0_ERROR;
@@ -169,17 +170,17 @@ module i3c_controller_cmd_parser (
             cmdr_error <= NACK_RESP;
           end
           // Ensure all receipt content is ok
-          sm <= receipt;
-          end
-        receipt: begin
+          sm <= SM_RECEIPT;
+        end
+        SM_RECEIPT: begin
           if (cmdr_ready) begin
-            sm <= receive;
+            sm <= SM_RECEIVE;
             cmdr_sync <= cmdr_sync + 1;
           end
-          end
+        end
         default: begin
-          sm <= receive;
-          end
+          sm <= SM_RECEIVE;
+        end
       endcase
     end
   end
@@ -189,8 +190,6 @@ module i3c_controller_cmd_parser (
   // delay i clock cycle.
   // Clear when cmr is read, since some RX transfer might get NACKed at
   // 0 bytes (no sdi_last).
-  reg wr_bytes_stop_reg;
-  reg [11:0] wr_bytes_lvl_reg;
   always @(posedge clk) begin
     wr_bytes_stop_reg <= wr_bytes_stop;
     if (cmdr_valid & cmdr_ready) begin
@@ -200,11 +199,11 @@ module i3c_controller_cmd_parser (
     end
   end
 
-  assign cmd_ready  = (sm == receive || sm == ccc_await) & reset_n;
-  assign cmdp_valid = (sm == xfer_await & reset_n);
+  assign cmd_ready  = (sm == SM_RECEIVE || sm == SM_CCC_WAIT) & reset_n;
+  assign cmdp_valid = (sm == SM_XFER_WAIT & reset_n);
 
   assign cmdr = {8'd0, cmdr_error, cmdr1_len, cmdr_sync};
-  assign cmdr_valid = sm == receipt;
+  assign cmdr_valid = sm == SM_RECEIPT;
 
   // For read bytes (write to peripheral), it is either all transferred or none,
   // since the peripheral can only reject during the address ACK.

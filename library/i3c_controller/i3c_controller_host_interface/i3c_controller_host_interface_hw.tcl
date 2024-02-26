@@ -21,7 +21,7 @@ ad_ip_files i3c_controller_host_interface [list \
   i3c_controller_host_interface_constr.sdc \
   i3c_controller_host_interface.v \
   i3c_controller_regmap.v \
-  i3c_controller_regmap_defs.v \
+  i3c_controller_regmap.vh \
   i3c_controller_cmd_parser.v \
   i3c_controller_pack.v \
   i3c_controller_unpack.v \

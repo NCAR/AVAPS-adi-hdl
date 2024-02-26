@@ -13,7 +13,7 @@ GENERIC_DEPS += i3c_controller_cmd_parser.v
 GENERIC_DEPS += i3c_controller_host_interface.v
 GENERIC_DEPS += i3c_controller_pack.v
 GENERIC_DEPS += i3c_controller_regmap.v
-GENERIC_DEPS += i3c_controller_regmap_defs.v
+GENERIC_DEPS += i3c_controller_regmap.vh
 GENERIC_DEPS += i3c_controller_unpack.v
 GENERIC_DEPS += i3c_controller_write_ibi.v
 

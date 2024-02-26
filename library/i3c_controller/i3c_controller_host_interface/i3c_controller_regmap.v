@@ -34,8 +34,8 @@
 // ***************************************************************************
 
 `timescale 1ns/100ps
-`default_nettype wire
-`include "i3c_controller_regmap_defs.v"
+
+`include "i3c_controller_regmap.vh"
 
 `define ADDRESS_WIDTH 8
 
@@ -115,9 +115,24 @@ module i3c_controller_regmap #(
   output     [3:0] rmap_dev_char_data
 );
 
-  localparam PCORE_VERSION = 'h00000100;
+  reg [31:0] up_scratch  = 32'h00; // Scratch register
+  reg        up_sw_reset = 1'b1;
+  reg [31:0] up_rdata_ff = 32'd0;
+  reg        up_wack_ff  = 1'b0;
+  reg        up_rack_ff  = 1'b0;
 
-  wire rstn;
+  // Holds DAA trigger High until sdo_fifo_empty goes Low,
+  // meaning DA got written.
+  reg        daa_trigger_lock;
+
+  reg        daa_pending;
+  reg        cmdr_pending;
+  reg        ibi_pending;
+
+  reg  [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_mask = 8'h0;
+  reg  [6:0] ops;
+  reg  [6:0] ops_candidate;
+  reg  [6:0] dev_char_addr_reg;
 
   // CMD FIFO
 
@@ -176,41 +191,54 @@ module i3c_controller_regmap #(
   wire ibi_fifo_valid;
   wire ibi_fifo_empty;
 
-  reg  up_sw_reset = 1'b1;
   wire up_sw_resetn = ~up_sw_reset;
 
-  reg  [31:0] up_rdata_ff = 'd0;
   wire [31:0] up_rdata_ff_w;
-  reg         up_wack_ff = 1'b0;
-  reg         up_rack_ff = 1'b0;
   wire        up_wreq_s;
   wire        up_rreq_s;
   wire [31:0] up_wdata_s;
   wire [13:0] up_waddr_s;
   wire [13:0] up_raddr_s;
+  wire        up_cmd_nop;
 
-  // Scratch register
-  reg [31:0] up_scratch = 'h00;
+  // IRQ handling
 
-  wire up_cmd_nop;
+  wire [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_source;
+  wire [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_pending;
 
-  // Holds DAA trigger High until sdo_fifo_empty goes Low,
-  // meaning DA got written.
-  reg daa_trigger_lock;
-  reg daa_pending;
-  reg cmdr_pending;
-  reg ibi_pending;
+  wire       ops_mode;
+  wire [3:0] ops_offload_len;
+  wire [1:0] ops_sg;
+  wire       offload_idle;
 
-  // assign clock and reset
+  wire [31:0] cmd_w;
+  wire cmd_valid_w;
+  wire cmd_ready_w;
 
-  assign rstn = s_axi_aresetn;
+  wire [6:0] dev_char_addr;
+  wire dev_char_w;
+  wire dev_char_wea;
+  wire dev_char_rea;
+  wire dev_char_ea;
+  wire [3:0] dev_char_wdata;
+  wire [3:0] dev_char_rdata;
 
-  // interface wrapper
+  // Offload mode
+
+  wire [31:0] offload_douta;
+  wire [31:0] offload_cmd;
+  wire [31:0] offload_sdo;
+  wire offload_cmd_valid;
+  wire offload_sdo_valid;
+
+  localparam PCORE_VERSION = 'h00000100;
+
+  // Interface wrapper
 
   up_axi #(
     .AXI_ADDRESS_WIDTH (16)
   ) i_up_axi (
-    .up_rstn(rstn),
+    .up_rstn(s_axi_aresetn),
     .up_clk(s_axi_aclk),
     .up_axi_awvalid(s_axi_awvalid),
     .up_axi_awaddr(s_axi_awaddr),
@@ -238,11 +266,6 @@ module i3c_controller_regmap #(
     .up_rdata(up_rdata_ff_w),
     .up_rack(up_rack_ff));
 
-  // IRQ handling
-  reg  [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_mask = 8'h0;
-  wire [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_source;
-  wire [`I3C_REGMAP_IRQ_WIDTH:0] up_irq_pending;
-
   assign up_irq_source = {
     daa_pending,
     ibi_pending,
@@ -257,16 +280,16 @@ module i3c_controller_regmap #(
   assign up_irq_pending = up_irq_mask & up_irq_source;
 
   always @(posedge s_axi_aclk) begin
-    if (rstn == 1'b0)
+    if (s_axi_aresetn == 1'b0)
       irq <= 1'b0;
     else
       irq <= |up_irq_pending;
     end
 
   always @(posedge s_axi_aclk) begin
-    if (rstn == 1'b0) begin
+    if (s_axi_aresetn == 1'b0) begin
       up_wack_ff <= 1'b0;
-      up_scratch <= 'h00;
+      up_scratch <= 32'h0;
       up_sw_reset <= 1'b1;
     end else begin
       up_wack_ff <= up_wreq_s;
@@ -278,28 +301,16 @@ module i3c_controller_regmap #(
       end
     end
   end
-
-  reg  [6:0] ops;
-  reg  [6:0] ops_candidate;
-  wire       ops_mode;
-  wire [3:0] ops_offload_len;
-  wire [1:0] ops_sg;
-  wire       offload_idle;
   assign ops_mode = ops[0];
   assign ops_offload_len = ops[4:1];
   assign ops_sg = ops[6:5];
   assign rmap_pp_sg = ops_sg;
 
-  wire [31:0] cmd_w;
-  wire cmd_valid_w;
-  wire cmd_ready_w;
-
   always @(posedge s_axi_aclk) begin
     if (!up_sw_resetn) begin
       ops <= 7'b1100000;
     end else if (up_cmd_nop) begin
-      if ((~ops_mode & ~cmd_valid_w) |
-          (ops_mode & offload_idle)) begin
+      if ((~ops_mode & ~cmd_valid_w) | (ops_mode & offload_idle)) begin
         ops <= ops_candidate;
       end
     end
@@ -309,9 +320,9 @@ module i3c_controller_regmap #(
   integer i;
   always @(posedge s_axi_aclk) begin
     if (!up_sw_resetn) begin
-      up_irq_mask <= 'h00;
-      rmap_ibi_config <= 'h00;
-	    ops_candidate <= 7'd0;
+      up_irq_mask <= 8'h0;
+      rmap_ibi_config <= 2'h0;
+      ops_candidate <= 7'd0;
     end else begin
       if (up_wreq_s) begin
         case (up_waddr_s[7:0])
@@ -326,8 +337,8 @@ module i3c_controller_regmap #(
   end
 
   always @(posedge s_axi_aclk) begin
-    if (rstn == 1'b0) begin
-      up_rack_ff <= 'd0;
+    if (s_axi_aresetn == 1'b0) begin
+      up_rack_ff <= 1'd0;
     end else begin
       up_rack_ff <= up_rreq_s;
     end
@@ -352,18 +363,10 @@ module i3c_controller_regmap #(
       `I3C_REGMAP_IBI_FIFO:       up_rdata_ff <= ibi_fifo_data;
       `I3C_REGMAP_FIFO_STATUS:    up_rdata_ff <= {sdi_fifo_empty, ibi_fifo_empty, cmdr_fifo_empty};
       `I3C_REGMAP_OPS:            up_rdata_ff <= {cmd_nop, ops};
-      default:                    up_rdata_ff <= 'h00;
+      default:                    up_rdata_ff <= 32'h0;
     endcase
   end
 
-  reg  [6:0] dev_char_addr_reg;
-  wire [6:0] dev_char_addr;
-  wire dev_char_w;
-  wire dev_char_wea;
-  wire dev_char_rea;
-  wire dev_char_ea;
-  wire [3:0] dev_char_wdata;
-  wire [3:0] dev_char_rdata;
   assign up_rdata_ff_w =  up_raddr_s[7:0] == `I3C_REGMAP_DEV_CHAR     ? {16'b0, dev_char_addr, 5'b0, dev_char_rdata} :
                           up_raddr_s[7:4] == `I3C_REGMAP_OFFLOAD_CMD_ ? offload_douta :
                           up_raddr_s[7:4] == `I3C_REGMAP_OFFLOAD_SDO_ ? offload_douta :
@@ -398,16 +401,8 @@ module i3c_controller_regmap #(
   assign dev_char_addr  = dev_char_w ? up_wdata_s[15:9] : dev_char_addr_reg;
   assign dev_char_rea   = up_rreq_s == 1'b1 && (up_raddr_s[7:0] == `I3C_REGMAP_DEV_CHAR);
   assign dev_char_w     = up_wreq_s == 1'b1 && (up_waddr_s[7:0] == `I3C_REGMAP_DEV_CHAR);
-  assign dev_char_wea   = dev_char_w && up_wdata_s[8:8];
+  assign dev_char_wea   = dev_char_w && up_wdata_s[8];
   assign dev_char_ea    = dev_char_rea | dev_char_wea;
-
-  // Offload mode
-
-  wire [31:0] offload_douta;
-  wire [31:0] offload_cmd;
-  wire [31:0] offload_sdo;
-  wire offload_cmd_valid;
-  wire offload_sdo_valid;
 
   generate if (OFFLOAD) begin
     wire offload_ea;
@@ -446,65 +441,65 @@ module i3c_controller_regmap #(
                          up_waddr_s[7:4] == `I3C_REGMAP_OFFLOAD_SDO_ );
     assign offload_ea = offload_rea | offload_wea;
 
-    reg [1:0] smt;
+    reg [1:0] sm;
     reg [3:0] k;
     reg [3:0] j;
-    localparam [1:0]
-      cmd_setup    = 0,
-      cmd_transfer = 1,
-      sdo_setup    = 2,
-      sdo_transfer = 3;
+
+    localparam [1:0] SM_CMD_GET = 0;
+    localparam [1:0] SM_CMD_PUT = 1;
+    localparam [1:0] SM_SDO_GET = 2;
+    localparam [1:0] SM_SDO_PUT = 3;
 
     reg [9:0] offload_sdo_buffer_len;
     always @(posedge s_axi_aclk) begin
       if (!a_reset_n | ~ops_mode | ops_offload_len == 0) begin
          offload_sdo_buffer_len <= 0;
-         smt <= cmd_setup;
+         sm <= SM_CMD_GET;
          k <= 'd0;
       end else begin
         // The same BRAM provides both cmd and sdo,
         // therefore a request-like interface is used.
-        if (smt[1] == 1'b0) begin
+        if (sm[1] == 1'b0) begin
           j <= 0;
         end
-        case (smt)
-          cmd_setup: begin
+        case (sm)
+          SM_CMD_GET: begin
             if (offload_trigger | k != 0) begin
-              smt <= cmd_transfer;
+              sm <= SM_CMD_PUT;
               k <= k == ops_offload_len - 1 ? 0 : k + 1;
             end
             end
-          cmd_transfer: begin
+          SM_CMD_PUT: begin
             if (cmd_ready) begin
-              smt <= sdo_setup;
+              sm <= SM_SDO_GET;
               if (~cmd[0]) begin
                 offload_sdo_buffer_len <= cmd[19:10] + {9'd0, |cmd[9:8]};
               end
             end
             end
-          sdo_setup: begin
-            smt <= sdo_transfer;
+          SM_SDO_GET: begin
+            sm <= SM_SDO_PUT;
             j <= j + 1;
             end
-          sdo_transfer: begin
+          SM_SDO_PUT: begin
             // New payload requested, check if is cmd or sdo.
             if (cmd_ready) begin
-              smt <= cmd_setup;
+              sm <= SM_CMD_GET;
             end else if (sdo_ready) begin
               if (|offload_sdo_buffer_len) begin
                 offload_sdo_buffer_len <= offload_sdo_buffer_len - 1;
               end
-              smt <= sdo_setup;
+              sm <= SM_SDO_GET;
             end
             end
        endcase
       end
     end
-    assign offload_idle = smt == cmd_setup & k == 0;
-    assign offload_addrb = smt[1] == 1'b0 ? {1'b0,k} : {1'b1,j};
-    assign offload_eb    = smt[0] == 1'b0 & ops_mode;
-    assign offload_cmd_valid = smt == cmd_transfer;
-    assign offload_sdo_valid = smt == sdo_transfer & |offload_sdo_buffer_len;
+    assign offload_idle  = sm == SM_CMD_GET & k == 0;
+    assign offload_addrb = sm[1] == 1'b0 ? {1'b0,k} : {1'b1,j};
+    assign offload_eb    = sm[0] == 1'b0 & ops_mode;
+    assign offload_cmd_valid = sm == SM_CMD_PUT;
+    assign offload_sdo_valid = sm == SM_SDO_PUT & |offload_sdo_buffer_len;
     assign offload_cmd = offload_doutb;
     assign offload_sdo = offload_doutb;
   end

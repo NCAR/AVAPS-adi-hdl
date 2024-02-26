@@ -41,40 +41,39 @@
 `timescale 1ns/100ps
 
 module i3c_controller_pack (
-  input clk,
-  input reset_n,
+  input         clk,
+  input         reset_n,
 
-  input  u32_ready,
-  output u32_valid,
+  input         u32_ready,
+  output        u32_valid,
   output [31:0] u32,
 
   output [11:0] u8_lvl,
 
-  output u8_ready,
-  input  u8_valid,
-  input  u8_last,
+  output       u8_ready,
+  input        u8_valid,
+  input        u8_last,
   input  [7:0] u8
 );
 
-  reg [0:0] sm;
-  localparam [0:0]
-    get = 0,
-    put = 1;
-
+  reg [0:0]  sm;
+  reg [1:0]  c;
   reg [7:0]  u32_reg [3:0];
   reg [11:0] u8_lvl_reg;
-  reg [1:0] c;
-  reg u8_last_reg;
+  reg        u8_last_reg;
+
+  localparam [0:0] SM_GET = 0;
+  localparam [0:0] SM_PUT = 1;
 
   always @(posedge clk) begin
     if (!reset_n) begin
-      sm <= get;
+      sm <= SM_GET;
       c <= 2'b00;
       u8_last_reg <= 1'b0;
       u8_lvl_reg <= 0;
     end else begin
       case (sm)
-        get: begin
+        SM_GET: begin
           u8_last_reg <= u8_last;
           if (u8_valid) begin // tick
             u32_reg[3-c] <= u8;
@@ -82,24 +81,24 @@ module i3c_controller_pack (
             c <= c + 1;
             if (c == 2'b11 | u8_last) begin
               c <= 2'b00;
-              sm <= put;
+              sm <= SM_PUT;
             end
           end
-          end
-        put: begin
+        end
+        SM_PUT: begin
           if (u32_ready) begin
-            sm <= get;
+            sm <= SM_GET;
             if (u8_last_reg) begin
               u8_lvl_reg <= 0;
             end
           end
-          end
+        end
       endcase
     end
   end
 
-  assign u8_ready = sm == get & reset_n;
-  assign u32_valid = sm == put;
+  assign u8_ready = sm == SM_GET & reset_n;
+  assign u32_valid = sm == SM_PUT;
   assign u8_lvl = u8_lvl_reg;
 
   genvar i;

@@ -39,7 +39,7 @@
 
 `timescale 1ns/100ps
 
-`include "i3c_controller_bit_mod_cmd.v"
+`include "i3c_controller_bit_mod.vh"
 
 module i3c_controller_bit_mod (
   input reset_n,
@@ -47,15 +47,15 @@ module i3c_controller_bit_mod (
 
   // Bit Modulation Command
 
-  input  [`MOD_BIT_CMD_WIDTH:0] cmd,
-  input  cmd_valid,
-  output cmd_ready,
+  input  [`MOD_BIT_CMD_WIDTH:0] cmdb,
+  input  cmdb_valid,
+  output cmdb_ready,
 
   // Mux to alternative logic to support I²C devices.
-  input  cmd_i2c_mode,
-  // Indicates that the bus is not transfering,
+  input  i2c_mode,
+  // Indicates that the bus is not transferring,
   // is *not* bus idle condition because does not wait 200us after P.
-  output cmd_nop,
+  output nop,
   // 0:  1.56MHz
   // 1:  3.12MHz
   // 2:  6.25MHz
@@ -74,92 +74,89 @@ module i3c_controller_bit_mod (
   output reg t
 );
 
-  reg [`MOD_BIT_CMD_WIDTH:0] cmd_r;
+  reg [`MOD_BIT_CMD_WIDTH:0] cmdb_r;
   reg [1:0] pp_sg;
   reg [5:0] count; // Worst-case: 1.56MHz, 32-bits per half-bit.
-  reg sr;
-  reg i2c_mode;
+  reg       sr;
+  reg       i2c_mode_reg;
+  reg       i2c_scl_reg;
+  reg [3:0] count_delay;
+  reg [1:0] sm;
 
-  wire t_w;
-  wire t_w2;
-  wire sdo_w;
-  wire [1:0] st = cmd_r[1:0];
-  wire [`MOD_BIT_CMD_WIDTH:2] sm;
-  wire scl_posedge;
+  wire [`MOD_BIT_CMD_WIDTH:2] st;
+  wire       t_w;
+  wire       t_w2;
+  wire       sdo_w;
+  wire       scl_posedge;
   wire [3:0] scl_posedge_multi;
   wire [1:0] count_high;
+  wire       sr_sda;
+  wire       sr_scl;
+  wire       i3c_scl_posedge;
+  wire       i2c_scl;
+  wire       i2c_scl_posedge;
+  wire [1:0] ss;
 
-  wire sr_sda;
-  wire sr_scl;
-  wire i3c_scl_posedge;
-  wire i2c_scl;
-  wire i2c_scl_posedge;
-
-  reg  i2c_scl_reg;
-  reg  [3:0] count_delay;
-
-  reg [1:0] smt;
-  localparam [1:0]
-    setup = 0,
-    stall = 1,
-    scl_low = 2,
-    scl_high = 3;
+  localparam [1:0] SM_SETUP    = 0;
+  localparam [1:0] SM_STALL    = 1;
+  localparam [1:0] SM_SCL_LOW  = 2;
+  localparam [1:0] SM_SCL_HIGH = 3;
 
   always @(posedge clk) begin
     count <= 4;
     i2c_scl_reg <= i2c_scl;
     count_delay <= {count_delay[2:0], count[5]};
     if (!reset_n) begin
-      smt <= setup;
-      cmd_r <= {`MOD_BIT_CMD_NOP_, 2'b01};
+      sm <= SM_SETUP;
+      cmdb_r <= {`MOD_BIT_CMD_NOP_, 2'b01};
       pp_sg <= 2'b00;
       sr <= 1'b0;
-      i2c_mode <= 1'b0;
+      i2c_mode_reg <= 1'b0;
     end else begin
-      if (smt == setup & cmd_valid) begin
-          i2c_mode <= cmd_i2c_mode;
+      if (sm == SM_SETUP & cmdb_valid) begin
+        i2c_mode_reg <= i2c_mode;
       end
 
-      case (smt)
-        scl_low: begin
+      case (sm)
+        SM_SCL_LOW: begin
           if (scl_posedge) begin
-            smt <= scl_high;
+            sm <= SM_SCL_HIGH;
           end
-          end
-        scl_high: begin
+        end
+        SM_SCL_HIGH: begin
           if (&count_high) begin
-            if (sm == `MOD_BIT_CMD_STOP_) begin
-              smt <= setup;
+            if (st == `MOD_BIT_CMD_STOP_) begin
+              sm <= SM_SETUP;
             end else begin
-              smt <= stall;
+              sm <= SM_STALL;
             end
           end
-          end
-        setup: begin
+        end
+        SM_SETUP: begin
           sr <= 1'b0;
-          end
-        stall: begin
-          end
+        end
+        SM_STALL: begin
+        end
       endcase
 
-      if (cmd_ready) begin
-        if (cmd_valid) begin
-          cmd_r <= cmd[4:2] != `MOD_BIT_CMD_START_ ? cmd : {cmd[4:2], 1'b0, cmd[0]};
+      if (cmdb_ready) begin
+        if (cmdb_valid) begin
+          cmdb_r <= cmdb[4:2] != `MOD_BIT_CMD_START_ ? cmdb : {cmdb[4:2], 1'b0, cmdb[0]};
           // CMDW_MSG_RX is push-pull, but the Sr to stop from the controller side is open drain.
-          pp_sg <= cmd[1] & cmd[4:2] != `MOD_BIT_CMD_START_ ? scl_pp_sg : 2'b00;
-          smt <= scl_low;
+          pp_sg <= cmdb[1] & cmdb[4:2] != `MOD_BIT_CMD_START_ ? scl_pp_sg : 2'b00;
+          sm <= SM_SCL_LOW;
         end else begin
-          cmd_r <= {`MOD_BIT_CMD_NOP_, 2'b01};
+          cmdb_r <= {`MOD_BIT_CMD_NOP_, 2'b01};
         end
       end
 
-      if (!cmd_ready) begin
+      if (!cmdb_ready) begin
           count <= count + 1;
       end
 
-      if (smt == setup) begin
+      if (sm == SM_SETUP) begin
         sr <= 1'b0;
-      end else if (cmd_ready) begin
+      end else if (cmdb_ready) begin
         sr <= 1'b1;
       end
     end
@@ -181,47 +178,47 @@ module i3c_controller_bit_mod (
 
   assign scl_posedge = scl_posedge_multi[3-pp_sg];
   assign count_high = count[1:0];
-  assign cmd_ready = (smt == setup) ||
-                     (smt == stall) ||
-                     (smt == scl_high & &count_high);
-  assign st = cmd_r[1:0];
-  assign sm = cmd_r[`MOD_BIT_CMD_WIDTH:2];
+  assign cmdb_ready = (sm == SM_SETUP) ||
+                     (sm == SM_STALL) ||
+                     (sm == SM_SCL_HIGH & &count_high);
+  assign ss = cmdb_r[1:0];
+  assign st = cmdb_r[`MOD_BIT_CMD_WIDTH:2];
 
   // Used to generate Sr with generous timing (locked in open drain speed).
-  assign sr_sda = ((~count[4] & count[5]) | ~count[5]) & smt == scl_low;
-  assign sr_scl = count[5] | smt == scl_high;
+  assign sr_sda = ((~count[4] & count[5]) | ~count[5]) & sm == SM_SCL_LOW;
+  assign sr_scl = count[5] | sm == SM_SCL_HIGH;
   assign i2c_scl = count_delay[3];
 
   assign i2c_scl_posedge = i2c_scl & ~i2c_scl_reg;
-  assign i3c_scl_posedge = (smt == scl_high & &(~count_high));
+  assign i3c_scl_posedge = (sm == SM_SCL_HIGH & &(~count_high));
 
   // Multi-cycle-path worst-case: 4 clks (12.5MHz, half-bit ack)
   assign rx = rx_raw;
-  assign rx_valid = i2c_mode ? i2c_scl_posedge : i3c_scl_posedge;
+  assign rx_valid = i2c_mode_reg ? i2c_scl_posedge : i3c_scl_posedge;
 
-  assign sdo_w = sm == `MOD_BIT_CMD_START_   ? sr_sda :
-                 sm == `MOD_BIT_CMD_STOP_    ? 1'b0 :
-                 sm == `MOD_BIT_CMD_WRITE_   ? st[0] :
-                 sm == `MOD_BIT_CMD_ACK_SDR_ ?
-                   (i2c_mode ? 1'b1 : (smt == scl_high ? rx   : 1'b1)) :
-                 sm == `MOD_BIT_CMD_ACK_IBI_ ?
-                   (smt == scl_high ? 1'b1 : 1'b0) :
+  assign sdo_w = st == `MOD_BIT_CMD_START_   ? sr_sda :
+                 st == `MOD_BIT_CMD_STOP_    ? 1'b0 :
+                 st == `MOD_BIT_CMD_WRITE_   ? ss[0] :
+                 st == `MOD_BIT_CMD_ACK_SDR_ ?
+                   (i2c_mode_reg ? 1'b1 : (sm == SM_SCL_HIGH ? rx : 1'b1)) :
+                 st == `MOD_BIT_CMD_ACK_IBI_ ?
+                   (sm == SM_SCL_HIGH ? 1'b1 : 1'b0) :
                  1'b1;
 
   // Expression ...
-  //assign t_w = sm == `MOD_BIT_CMD_STOP_    ? 1'b0 :
-  //             sm == `MOD_BIT_CMD_START_   ? 1'b0 :
-  //             sm == `MOD_BIT_CMD_READ_    ? 1'b0 :
-  //             sm == `MOD_BIT_CMD_ACK_SDR_ ? 1'b0 :
-  //             st[1];
+  //assign t_w = st == `MOD_BIT_CMD_STOP_    ? 1'b0 :
+  //             st == `MOD_BIT_CMD_START_   ? 1'b0 :
+  //             st == `MOD_BIT_CMD_READ_    ? 1'b0 :
+  //             st == `MOD_BIT_CMD_ACK_SDR_ ? 1'b0 :
+  //             ss[1];
   // ... gets optimized to
-  assign t_w  = sm[4] ? 1'b0 : st[1];
+  assign t_w  = st[4] ? 1'b0 : ss[1];
   assign t_w2 = ~t_w & sdo_w ? 1'b1 : 1'b0;
 
-  assign scl = sm == `MOD_BIT_CMD_START_ ? (sr ? sr_scl : 1'b1) :
-               i2c_mode ? (i2c_scl || smt == setup) :
-               (~(smt == scl_low || smt == stall));
+  assign scl = st == `MOD_BIT_CMD_START_ ? (sr ? sr_scl : 1'b1) :
+               i2c_mode_reg ? (i2c_scl || sm == SM_SETUP) :
+               (~(sm == SM_SCL_LOW || sm == SM_STALL));
 
-  assign cmd_nop = sm == `MOD_BIT_CMD_NOP_ & smt == setup;
+  assign nop = st == `MOD_BIT_CMD_NOP_ & sm == SM_SETUP;
 
 endmodule

@@ -18,8 +18,8 @@ The interface consists of five streams:
 Instruction Set Specification
 --------------------------------------------------------------------------------
 
-The I3C Controller instruction set is a pair of 32-bit instruction set (command
-0 and command 1).
+The I3C Controller instruction set is a pair of 32-bit command descriptors
+(command 0 and command 1), with the latter present only for some command 0 values.
 
 .. _i3c_controller command_descriptors:
 
@@ -85,7 +85,7 @@ The CCC ID is defined in the *linux/i3c/ccc.h* file.
    the procedure.
 
 Bits not presented in the tables are assumed 0.
-When Value is filled, it means it is is the required constant value for this
+When Value is filled, it means it is the required constant value for this
 transfer.
 
 +------------------------------------------------------------------------------+
@@ -164,7 +164,7 @@ Command Receipts
 
 Command receipts (cmdr) are returned descriptors for each command descriptor
 executed (cmd).
-When a new cmdr is written to the CMDR FIFO, an interruption is sent to
+When a new cmdr is written to the CMDR FIFO, an interrupton is sent to
 PS, see :ref:`i3c_controller interrupts`.
 
 In the cmdr, the buffer length is updated with the number of bytes actually
@@ -232,7 +232,7 @@ In-Band Interrupts
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 IBI\s are accepted autonomously during bus idle if the feature is enabled.
-The accepted IBI\s fill the IBI FIFO and generate an interruption in the
+The accepted IBI\s fill the IBI FIFO and generate an interrupt to the
 PS.
 
 The structure of the received IBI is:
@@ -364,42 +364,43 @@ the possible commands, and body is a 1-byte that depends on the header.
 Configuration Registers
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. _i3c_controller offload-control-interface:
+.. _i3c_controller offload-interface:
 
-Offload Control Interface
+Offload Interface
 --------------------------------------------------------------------------------
 
 The offload interface allows to cyclic operation with SDI output to a DMA.
 The offload commands are the same as in :ref:`i3c_controller command_descriptors`,
-however no command receipt is emitted and less complex should be preferred with
-this interface, specially that the I3C specification allows the peripheral to
-reject a transfer.
+however no command receipt is emitted and less complex transactions are preferred
+with this interface, specially that the I3C specification allows the peripheral to
+reject a transfer;
+in summary, are suitable of the offload interface register read transfers, e.g.
+ADC readings.
 
-Instead of writing the command to a FIFO, the user shall write the commands in
-sequence to the OFFLOAD_CMD_* registers and update the OFFLOAD_CMD_LENGTH
-register subfield (one shall set the OPS_MODE to offload at the same write).
-The offload logic will then execute in cycles at each offload_trigger when
-in OPS_MODE offload ('b11).
+To use this mode,
+instead of writing the command to the CMD FIFO and the payloads to SDO FIFO:
 
-In summary, are suitable of the offload interface register read transfers.
+* Write the command descriptors in sequence of execution to the OFFLOAD_CMD_*
+  registers.
+* Populate the OFFLOAD_SDO_* registers with the SDO payload, preserving unused
+  bytes slots (don't mix different commands payload in the same address).
+* Update the OPS_OFFLOAD_LENGTH register subfield with the number of commands
+  descriptors.
+
+The offload logic will then execute a burst for each offload_trigger
+(OPS_MODE must be 'b1).
+Also, one shall set the OPS_MODE to offload at the same write of the
+OPS_OFFLOAD_LENGTH.
 
 The Block RAM Offload
 --------------------------------------------------------------------------------
 
-A 16-bit wide address, 32-bit data dual access block ram is used to store the
+A 5-bit wide address, 32-bit data dual access block ram is used to store the
 offload commands and SDO.
 
-The registers are mapped at [4:4] LSB:
-
-.. list-table::
-   :header-rows: 1
-
-   * - Value [5:5]
-     - Description
-   * - ``0``
-     - Commands
-   * - ``1``
-     - SDO
+The bit 5 indicates if it's a command descriptor ('b0) or a SDO payload ('b1).
+The actual width of the address and data depends on the implementation, but in
+general the 5-bit address is placed as a 16-bit address with the 11 MSB grounded.
 
 Debugging Tips
 --------------------------------------------------------------------------------

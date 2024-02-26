@@ -183,7 +183,7 @@ CMD_FIFO_ROOM
 ENDREG
 
 FIELD
-[31:0] 0x????????
+[31:0]
 CMD_FIFO_ROOM
 RO
 Number of free entries in the CMD FIFO.
@@ -213,7 +213,7 @@ SDO_FIFO_ROOM
 ENDREG
 
 FIELD
-[31:0] 0x????????
+[31:0]
 SDO_FIFO_ROOM
 RO
 Number of free entries in the SDO FIFO.
@@ -265,7 +265,7 @@ See :ref:`i3c_controller instruction-format` for the structure of the command.
 ENDREG
 
 FIELD
-[31:0] 0x??
+[31:0]
 CMD_FIFO
 WO
 The command to the I3C controller to execute.
@@ -357,7 +357,7 @@ Writing to it has no effect.
 ENDREG
 
 FIELD
-[31:0] 0x??
+[31:0] 0x????????
 SDI_FIFO
 RO
 ENDFIELD
@@ -426,24 +426,25 @@ ENDFIELD
 REG
 0x40
 OPS
+Configure the operation of the controller.
 ENDREG
 
 FIELD
-[0] 0x??
+[0] 0x0
 OPS_MODE
 RW
-Set 0 to private transfers, 1 to offload.
+Set 0 to direct transfers, 1 to offload operation.
 ENDFIELD
 
 FIELD
-[4:1] 0x??
+[4:1] 0x0
 OPS_OFFLOAD_LENGTH
 RW
 Offload commands length.
 ENDFIELD
 
 FIELD
-[6:5] 0x??
+[6:5] 0x00
 OPS_SPEED_GRADE
 RW
 Sets the speed grade in push-pull mode.
@@ -467,10 +468,11 @@ ENDIELD
 REG
 0x50
 IBI_CONFIG
+Configure the In-Band Interrupt (IBI) feature.
 ENDREG
 
 FIELD
-[0] 0x??
+[0] 0x0
 IBI_CONFIG_ENABLE
 WO
 Set this bit to accept (ACK) IBI requests.
@@ -482,7 +484,7 @@ Accepted IBIs fill the IBI_FIFO and generate an interruption in the PS.
 ENDFIELD
 
 FIELD
-[1] 0x??
+[1] 0x0
 IBI_CONFIG_AUTO
 WO
 Set this bit to listen for IBI requests (when a peripheral pulls SDA Low during quiet times).
@@ -534,14 +536,14 @@ Indicates if the device sends an MDB during the IBI.
 ENDFIELD
 
 FIELD
-[8:8] 0x???
+[8:8] 0xX
 DEV_CHAR_WEN
 W
 Enable write of the fields.
 ENDFIELD
 
 FIELD
-[15:9] 0x???
+[15:9] 0x??
 DEV_CHAR_ADDR
 RW
 Device address to apply DEV_CHAR[3:0].
@@ -557,6 +559,13 @@ Offload command memory. Write commands in sequence to these addresses and update
 OFFLOAD_CMD_LENGTH register.
 ENDREG
 
+FIELD
+[31:0] 0x??????
+OFFLOAD_CMD
+RW
+The command to the I3C controller to execute.
+ENDFIELD
+
 ############################################################################################
 ############################################################################################
 
@@ -564,8 +573,38 @@ REG
 0xc0 + 0x01*n
 OFFLOAD_SDO_n
 Offload SDO memory.
-The length is infered by the commands and reset after each burst.
+Dual access memory sector used to store the SDO payload for the offload execution.
+The SDO is read by the parsing the OFFLOAD_CMD commands.
+For example, if the first command on OFFLOAD_CMD is a write with length 3 and the next with
+length 2, 3 bytes from OFFLOAD_SDO_0 are sent, then 2 bytes from OFFLOAD_SDO_1 are sent.
+If OPS_OFFLOAD_LENGTH is 2, then the burst concludes and the "pointer" resets to
+OFFLOAD_SDO_0, otherwise, the execution continues until all commands are resolved, always
+bounded by OPS_OFFLOAD_LENGTH.
 ENDREG
+
+FIELD
+[31:24] 0x??
+OFFLOAD_SDO_BYTE_3
+RO
+ENDFIELD
+
+FIELD
+[23:16] 0x??
+OFFLOAD_SDO_BYTE_2
+RO
+ENDFIELD
+
+FIELD
+[15:8] 0x??
+OFFLOAD_SDO_BYTE_1
+RO
+ENDFIELD
+
+FIELD
+[7:0] 0x??
+OFFLOAD_SDO_BYTE_0
+RO
+ENDFIELD
 
 ############################################################################################
 ############################################################################################

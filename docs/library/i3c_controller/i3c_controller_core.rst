@@ -6,7 +6,8 @@ I3C Controller Core
 .. hdl-component-diagram::
 
 The I3C Controller Core peripheral forms the heart of the I3C Controller.
-It is responsible for handling a I3C Controller commandsand translates it into low-level I3C bus transactions.
+It is responsible for handling a I3C Controller commands and translates it into
+low-level I3C bus transactions.
 
 Files
 -------------------------------------------------------------------------------

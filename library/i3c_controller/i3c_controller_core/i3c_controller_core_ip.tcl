@@ -10,17 +10,15 @@ global VIVADO_IP_LIBRARY
 
 adi_ip_create i3c_controller_core
 adi_ip_files i3c_controller_core [list \
-  "i3c_controller_core_constr.ttcl" \
   "i3c_controller_core.v" \
   "i3c_controller_framing.v" \
   "i3c_controller_word.v" \
-   "i3c_controller_word_cmd.v" \
+  "i3c_controller_word.vh" \
   "i3c_controller_bit_mod.v" \
-   "i3c_controller_bit_mod_cmd.v" \
+  "i3c_controller_bit_mod.vh" \
 ]
 
 adi_ip_properties_lite i3c_controller_core
-adi_ip_ttcl i3c_controller_core "i3c_controller_core_constr.ttcl"
 
 set_property company_url {https://wiki.analog.com/resources/fpga/peripherals/i3c_controller/core} [ipx::current_core]
 

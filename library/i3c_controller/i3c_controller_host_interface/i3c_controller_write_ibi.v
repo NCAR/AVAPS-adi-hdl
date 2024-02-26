@@ -47,28 +47,29 @@ module i3c_controller_write_ibi (
   input  in_valid,
   input  [14:0] in
 );
+
   reg [0:0] sm;
-  localparam [0:0]
-    idle     = 0,
-    move     = 1;
 
   reg [6:0] da;
   reg [7:0] mdb;
   reg [7:0] sync;
 
+  localparam [0:0] SM_GET = 0;
+  localparam [0:0] SM_PUT = 1;
+
   always @(posedge clk) begin
     if (!reset_n) begin
-      sm <= idle;
+      sm <= SM_GET;
       sync <= 8'd0;
     end else begin
       case (sm)
-        idle: begin
-          sm <= in_valid ? move : sm;
+        SM_GET: begin
+          sm <= in_valid ? SM_PUT : sm;
           da   <= in[14:8];
           mdb  <= in[7:0];
         end
-        move: begin
-          sm <= out_ready ? idle : sm;
+        SM_PUT: begin
+          sm <= out_ready ? SM_GET : sm;
           sync <= out_ready ? sync+1 : sync;
         end
       endcase
@@ -76,6 +77,6 @@ module i3c_controller_write_ibi (
   end
 
   assign out = {8'd0, da, 1'b0, mdb, sync};
-  assign in_ready = sm == idle;
-  assign out_valid = sm == move;
+  assign in_ready = sm == SM_GET;
+  assign out_valid = sm == SM_PUT;
 endmodule
