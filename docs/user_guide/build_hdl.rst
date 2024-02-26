@@ -526,7 +526,13 @@ Currently we only have a single early version base design that builds almost
 like the same then the others. For Lattice there are separate tools for creating
 a block design **(Propel Builder)** and building a hdl design **(Radiant)**.
 Like in the other cases the build for any supported project works by ``make``.
-You simply go to carryer folder and run make. For now you can try to build the
+First you have to open the **Propel Builder GUI** and **download** the necessary
+Lattice provided IPs manually. You can check the **necessary Lattice IPs** and
+and their versions in the
+**<project_name>_bd_<*>.tcl** script or follow the error messages in the
+**<project_name>_propel_builder.log** after running ``make`` and you get
+a FAILED message.
+Then simply go to carrier folder and run make. For now you can try to build the
 only base design we have for **CertusPro-NX Evaluation Board** by entering the
 base design directory and running ``make``.
 
@@ -573,12 +579,12 @@ Note that if the **Propel Builder** project fails to build the
 If the **Propel Builder** project was built successfully, the **sge**
 folder should appear in the **<ADI_carrier_proj_dir>/** or in the
 **<ADI_carrier_proj_dir>/<project_name>**.
-The **sge** foleder contains the **bsp** folder (Base Support
+The **sge** folder contains the **bsp** folder (Base Support
 Package) and the SoC configuration files. The **bsp** folder contains the
 available Lattice provided drivers for the IPs used in the design (Sometimes
-these drivers are more like some basic examples to modifi for your specific
+these drivers are more like some basic examples to modify for your specific
 application) and the **sys_platform.h** file.
-You should find a **sys_env.xml** file in the same **sge** folder, this file is
+You should find a **sys_env.xml** file in the same **sge** folder. This file is
 used to create a **no-OS** project with the current **bsp**.
 
 When running the Propel Builder targets we call ``propelbld system_project_bd.tcl
@@ -751,11 +757,11 @@ expect and understand when using ADI HDL repository on these tools.
      - :red:`Not supported or nonexistent yet.``
    * - Upgrading/Version changes (non-ADI cores)
      - You have to update the IP versions manually in GUI and copy the config
-       from the tcl console to the .tcl block design file, or update directly in
-       the .tcl block design file. Note that first you have to download the new
-       version of IPs using the GUI. An ip_upgrade tcl command exists, but still
-       the IPs has to be downloaded manually, and it only works if the old IP's
-       name is the same like the new (sometimes it changes by version).
+       from the tcl console to the '.tcl' block design file, or update directly
+       in the '.tcl' block design file. Note that first you have to download the
+       new version of IPs using the GUI. An ip_upgrade tcl command exists, but
+       still the IPs has to be downloaded manually, and it only works if the old
+       IP's name is the same as the new (sometimes it changes by version).
 
 Tool versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
