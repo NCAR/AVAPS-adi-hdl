@@ -192,8 +192,8 @@ module i3c_controller_host_interface #(
     .rmap_dev_char_addr(rmap_dev_char_addr),
     .rmap_dev_char_data(rmap_dev_char_data));
 
-  i3c_controller_unpack #(
-  ) i_i3c_controller_unpack (
+  i3c_controller_unpack
+  i_i3c_controller_unpack (
     .clk(clk_w),
     .reset_n(reset_n),
     .stop(rd_bytes_stop),
@@ -205,8 +205,8 @@ module i3c_controller_host_interface #(
     .u8_valid(sdo_valid),
     .u8(sdo));
 
-  i3c_controller_pack #(
-  ) i_i3c_controller_pack (
+  i3c_controller_pack
+  i_i3c_controller_pack (
     .clk(clk_w),
     .reset_n(reset_n),
     .u32_ready(sdi_ready_w),
@@ -218,8 +218,8 @@ module i3c_controller_host_interface #(
     .u8_last(sdi_last),
     .u8(sdi));
 
-  i3c_controller_write_ibi #(
-  ) i_i3c_controller_write_ibi (
+  i3c_controller_write_ibi
+  i_i3c_controller_write_ibi (
     .clk(clk_w),
     .reset_n(reset_n),
     .out_ready(ibi_ready_w),
@@ -229,8 +229,8 @@ module i3c_controller_host_interface #(
     .in_valid(ibi_valid),
     .in(ibi));
 
-  i3c_controller_cmd_parser #(
-  ) i_i3c_controller_cmd_parser (
+  i3c_controller_cmd_parser
+  i_i3c_controller_cmd_parser (
     .clk(clk_w),
     .reset_n(reset_n),
     .cmd_ready(cmd_ready),

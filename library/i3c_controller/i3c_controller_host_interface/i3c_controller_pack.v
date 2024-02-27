@@ -103,8 +103,10 @@ module i3c_controller_pack (
   assign u8_lvl = u8_lvl_reg;
 
   genvar i;
-  for (i=0; i<4; i=i+1) begin
-    assign u32[8*i+7:8*i] = u32_reg[3-i];
-  end
+  generate
+    for (i=0; i<4; i=i+1) begin: gen_u32
+      assign u32[8*i+7:8*i] = u32_reg[3-i];
+    end
+  endgenerate
 
 endmodule

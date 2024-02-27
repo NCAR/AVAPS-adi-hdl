@@ -58,13 +58,14 @@ module ad_mem_dual #(
   (* ram_style = "block" *)
   reg [(DATA_WIDTH-1):0] m_ram[0:((2**ADDRESS_WIDTH)-1)];
 
-  if (INITIALIZE) begin
-    integer i;
-    initial begin
-      for (i = 0; i <= (2**ADDRESS_WIDTH); i = i+1)
-        m_ram[i] = 'b0;
+  genvar i;
+  generate
+    if (INITIALIZE) begin
+      for (i = 0; i < (2**ADDRESS_WIDTH); i = i + 1) begin: gen_m_ram
+        initial m_ram[i] = 'b0;
+      end
     end
-  end
+  endgenerate
 
   always @(posedge clka) begin
     if (ea == 1'b1) begin

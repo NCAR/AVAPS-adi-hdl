@@ -140,8 +140,8 @@ module i3c_controller_core #(
     .rmap_dev_char_addr(rmap_dev_char_addr),
     .rmap_dev_char_data(rmap_dev_char_data));
 
-  i3c_controller_word #(
-  ) i_i3c_controller_word (
+  i3c_controller_word
+  i_i3c_controller_word (
     .reset_n(reset_n),
     .clk(clk),
     .cmdw_valid(cmdw_valid),
@@ -168,8 +168,8 @@ module i3c_controller_core #(
     .ibi_mdb(ibi_mdb),
     .rmap_ibi_config(rmap_ibi_config));
 
-  i3c_controller_bit_mod #(
-  ) i_i3c_controller_bit_mod (
+  i3c_controller_bit_mod
+  i_i3c_controller_bit_mod (
     .reset_n(reset_n),
     .clk(clk),
     .cmd(cmd),

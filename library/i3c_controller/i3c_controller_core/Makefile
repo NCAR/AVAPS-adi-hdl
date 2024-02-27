@@ -27,4 +27,6 @@ XILINX_DEPS += ../../i3c_controller/interfaces/i3c_controller_sdio_rtl.xml
 
 XILINX_INTERFACE_DEPS += i3c_controller/interfaces
 
+INTEL_DEPS += i3c_controller_core_hw.tcl
+
 include ../../scripts/library.mk

@@ -409,7 +409,7 @@ module i3c_controller_regmap #(
   wire offload_cmd_valid;
   wire offload_sdo_valid;
 
-  generate if (OFFLOAD == 1) begin
+  generate if (OFFLOAD) begin
     wire offload_ea;
     wire offload_wea;
     wire offload_rea;

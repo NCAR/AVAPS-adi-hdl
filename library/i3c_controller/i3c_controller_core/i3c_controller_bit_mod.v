@@ -173,9 +173,11 @@ module i3c_controller_bit_mod (
   end
 
   genvar i;
-  for (i = 0; i < 4; i = i+1) begin
-    assign scl_posedge_multi[i] = &count[i+2:0];
-  end
+  generate
+    for (i = 0; i < 4; i = i+1) begin: gen_scl
+      assign scl_posedge_multi[i] = &count[i+2:0];
+    end
+  endgenerate
 
   assign scl_posedge = scl_posedge_multi[3-pp_sg];
   assign count_high = count[1:0];
