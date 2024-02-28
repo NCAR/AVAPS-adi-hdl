@@ -14,6 +14,14 @@ set_property -dict {PACKAGE_PIN M6}   [get_ports dac_data_p[2]]                 
 set_property -dict {PACKAGE_PIN M5}   [get_ports dac_data_n[2]]                                                  ; ## A35  FMC0_DP4_C2M_N        MGTHTXN3_228
 set_property -dict {PACKAGE_PIN N4}   [get_ports dac_data_p[3]]                                                  ; ## B32  FMC0_DP7_C2M_P        MGTHTXP2_228
 set_property -dict {PACKAGE_PIN N3}   [get_ports dac_data_n[3]]                                                  ; ## B33  FMC0_DP7_C2M_N        MGTHTXN2_228
+set_property -dict {PACKAGE_PIN K6}   [get_ports dac_data_p[4]]                                                  ; ## A30  FMC0_DP3_C2M_P        MGTHTXP0_229
+set_property -dict {PACKAGE_PIN K5}   [get_ports dac_data_n[4]]                                                  ; ## A31  FMC0_DP3_C2M_N        MGTHTXN0_229
+set_property -dict {PACKAGE_PIN F6}   [get_ports dac_data_p[5]]                                                  ; ## A26  FMC0_DP2_C2M_P        MGTHTXP3_229
+set_property -dict {PACKAGE_PIN F5}   [get_ports dac_data_n[5]]                                                  ; ## A27  FMC0_DP2_C2M_N        MGTHTXN3_229
+set_property -dict {PACKAGE_PIN H6}   [get_ports dac_data_p[6]]                                                  ; ## A22  FMC0_DP1_C2M_P        MGTHTXP1_229
+set_property -dict {PACKAGE_PIN H5}   [get_ports dac_data_n[6]]                                                  ; ## A23  FMC0_DP1_C2M_N        MGTHTXN1_229
+set_property -dict {PACKAGE_PIN G4}   [get_ports dac_data_p[7]]                                                  ; ## C2   FMC0_DP0_C2M_P        MGTHTXP2_229
+set_property -dict {PACKAGE_PIN G3}   [get_ports dac_data_n[7]]                                                  ; ## C3   FMC0_DP0_C2M_N        MGTHTXN2_229
 
 # Ref clock
 set_property -dict {PACKAGE_PIN L8}   [get_ports br40_ext_p]                                                     ; ## B20  FMC0_GBTCLK1_M2C_C_P  MGTREFCLK0P_228
