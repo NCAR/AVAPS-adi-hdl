@@ -31,8 +31,8 @@ HDL project from the repository:
    -  Starting with ``hdl_2021_r1`` release branch:
       :git-hdl:`scripts/adi_env.tcl`
    -  For ``hdl_2019_r2`` and older:
-      :git-hdl:`hdl/projects/scripts/adi_project_xilinx.tcl <projects/scripts/adi_project_xilinx.tcl>` for Vivado, and
-      :git-hdl:`hdl/projects/scripts/adi_project_intel.tcl <projects/scripts/adi_project_intel.tcl>` for Quartus.
+      :git-hdl:`hdl/projects/scripts/adi_project_xilinx.tcl <hdl_2019_r2:projects/scripts/adi_project_xilinx.tcl>` for Vivado, and
+      :git-hdl:`hdl/projects/scripts/adi_project_intel.tcl <hdl_2019_r2:projects/scripts/adi_project_intel.tcl>` for Quartus.
 
 #. Download the tools from the following links:
 
@@ -95,7 +95,7 @@ Setup the HDL repository
 -------------------------------------------------------------------------------
 These designs are built upon ADI's generic HDL reference designs framework.
 ADI does not distribute the bit/elf files of these projects so they
-must be built from the sources available :git-hdl:`here <master:/>`. To get
+must be built from the sources available :git-hdl:`here </>`. To get
 the source you must
 `clone <https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository>`__
 the repository. This is the best method to get the sources. Here, we are
@@ -532,53 +532,37 @@ inside its sub-folders. What this means is that if you run ``make`` inside
 **hdl/projects/daq2**, it builds all the carriers (**kc705**, **a10soc**,
 **kcu105**, **zc706** to **zcu102**) instead of just the target carrier.
 
-The following 'targets' are supported.
+The following targets/arguments are supported:
 
-+------------------+--------------------------------------------------+
-| argument         | description                                      |
-+==================+==================================================+
-| all              | This builds everything in the current folder and |
-|                  | its sub-folders, see context examples below.     |
-+------------------+--------------------------------------------------+
-|                  | make -C library/axi_ad9122 all; ## build AD9122  |
-|                  | library component (AMD only).                    |
-+------------------+--------------------------------------------------+
-|                  | make -C library all; ## build **ALL** library    |
-|                  | components inside 'library' (AMD only).          |
-+------------------+--------------------------------------------------+
-|                  | make -C projects/daq2/zc706 all; ## build        |
-|                  | DAQ2_ZC706 (AMD) project.                        |
-+------------------+--------------------------------------------------+
-|                  | make -C projects/daq2/a10soc all; ## build       |
-|                  | DAQ2_A10SOC(Intel) project.                      |
-+------------------+--------------------------------------------------+
-|                  | make -C projects/daq2 all; ## build DAQ2 **ALL** |
-|                  | carrier (including Intel & AMD) projects.        |
-+------------------+--------------------------------------------------+
-|                  | make -C projects all; ## build **ALL** projects  |
-|                  | (something you really should NOT do).            |
-+------------------+--------------------------------------------------+
-| clean            | This removes all tool and temporary files in the |
-|                  | current folder and its sub-folders, same context |
-|                  | as above.                                        |
-+------------------+--------------------------------------------------+
-| clean-all        | This removes all tool and temporary files in the |
-|                  | current folder, its sub-folders and from all the |
-|                  | IPs that are specified in the Makefile file;     |
-|                  | same context as above.                           |
-+------------------+--------------------------------------------------+
-| lib              | This is same as 'all' in the library folder,     |
-|                  | ignored inside project folders.                  |
-+------------------+--------------------------------------------------+
-| project.platform | This is a special target available only in the   |
-|                  | 'hdl' root folder and is ignored everywhere      |
-|                  | else, see syntax below.                          |
-+------------------+--------------------------------------------------+
-|                  | make daq2.a10soc ; ## build                      |
-|                  | projects/daq2/a10soc.                            |
-+------------------+--------------------------------------------------+
-|                  | make daq2.zc706 ; ## build projects/daq2/zc706.  |
-+------------------+--------------------------------------------------+
+* ``all``:
+  This builds everything in the current folder and its sub-folders, for example:
+
+  * ``make -C library/axi_ad9122 all; # build AD9122 library component (AMD only).``
+  * ``make -C library all; # build ALL library components inside 'library' (AMD only).``
+  * ``make -C projects/daq2/zc706 all; # build DAQ2_ZC706 (AMD) project.``
+  * ``make -C projects/daq2/a10soc all; # build DAQ2_A10SOC (Intel) project.``
+  * ``make -C projects/daq2 all; # build DAQ2 ALL carrier (Intel & AMD) projects.``
+  * ``make -C projects all; # build ALL projects (not recommended).``
+* ``clean``:
+  Removes all tool and temporary files in the current folder and its
+  sub-folders, same context as above.
+* ``clean-all``:
+  This removes all tool and temporary files in the current folder, its
+  sub-folders and from all the IPs that are specified in the Makefile file;
+  same context as above.
+* ``lib``: This is same as ``all`` in the library folder, ignored inside project
+  folders.
+* ``projects.platform``: This is a special target available only in the 'hdl' root
+  folder and is ignored everywhere else, see syntax:
+
+  * ``make daq2.a10soc ; # build projects/daq2/a10soc.``
+  * ``make daq2.zc706 ; # build projects/daq2/zc706.``
+
+To speed up the building process, especially libraries, you can use the ``-j``
+option to run the targets in parallel, e.g. ``make -j4``.
+
+All artifacts generated by the build process should be "git"-ignored,
+e.g. ``component.xml`` and ``.lock`` files.
 
 Tools and their versions
 -------------------------------------------------------------------------------
@@ -668,10 +652,10 @@ to use an unsupported version of tools.
    The easiest way is to check the `release
    notes <https://github.com/analogdevicesinc/hdl/releases>`__. You may
    also check out or browse the desired branch, and verify the tool version
-   in the base Tcl script
-   (`./hdl/projects/scripts/adi_project_xilinx.tcl <https://github.com/analogdevicesinc/hdl/blob/master/projects/scripts/adi_project_xilinx.tcl#L4>`__)
+   in the base Tcl script ./hdl/scripts/adi_env.tcl
+   (:git-hdl:`for Vivado version <scripts/adi_env.tcl#L18>`)
    or
-   (`./hdl/projects/scripts/adi_project_intel.tcl <https://github.com/analogdevicesinc/hdl/blob/master/projects/scripts/adi_project_intel.tcl#L5>`__),
+   (:git-hdl:`or for Quartus version <scripts/adi_env.tcl#L34>`),
    which build the projects.
 
 Environment

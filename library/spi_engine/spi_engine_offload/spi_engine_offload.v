@@ -1,6 +1,6 @@
 // ***************************************************************************
 // ***************************************************************************
-// Copyright (C) 2015-2023 Analog Devices, Inc. All rights reserved.
+// Copyright (C) 2015-2024 Analog Devices, Inc. All rights reserved.
 //
 // In this HDL repository, there are many different and unique modules, consisting
 // of various HDL (Verilog or VHDL) components. The individual modules are
@@ -26,7 +26,7 @@
 //
 //   2. An ADI specific BSD license, which can be found in the top level directory
 //      of this repository (LICENSE_ADIBSD), and also on-line at:
-//      https://github.com/analogdevicesinc/hdl/blob/master/LICENSE_ADIBSD
+//      https://github.com/analogdevicesinc/hdl/blob/main/LICENSE_ADIBSD
 //      This will allow to generate bit files and not release the source code,
 //      as long as it attaches to an ADI device.
 //
@@ -96,9 +96,12 @@ module spi_engine_offload #(
   reg [15:0] cmd_mem[0:2**CMD_MEM_ADDRESS_WIDTH-1];
   reg [(DATA_WIDTH-1):0] sdo_mem[0:2**SDO_MEM_ADDRESS_WIDTH-1];
 
+  reg trigger_last_reg;
+
   wire [15:0] cmd_int_s;
   wire [CMD_MEM_ADDRESS_WIDTH-1:0] spi_cmd_rd_addr_next;
   wire spi_enable;
+  wire trigger_posedge;
 
   assign cmd_valid = spi_active;
   assign sdo_data_valid = spi_active;
@@ -126,7 +129,7 @@ module spi_engine_offload #(
   wire [ 7:0] spi_sync_id_init_s;
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_mem_reset == 1'b1) begin
+    if (ctrl_mem_reset) begin
       ctrl_sync_id_init <= 8'b0;
       ctrl_sync_id_load <= 1'b0;
     end else begin
@@ -160,7 +163,7 @@ module spi_engine_offload #(
     .out_bits(spi_sync_id_init_s));
 
   always @(posedge spi_clk) begin
-    if (spi_resetn == 1'b0) begin
+    if (!spi_resetn) begin
       spi_sync_id_counter <= 8'b0;
     end else begin
       if (spi_sync_id_load_s) begin
@@ -198,9 +201,9 @@ module spi_engine_offload #(
   reg spi_enabled = 1'b0;
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_enable == 1'b1) begin
+    if (ctrl_enable) begin
       ctrl_do_enable <= 1'b1;
-    end else if (ctrl_is_enabled == 1'b1) begin
+    end else if (ctrl_is_enabled) begin
       ctrl_do_enable <= 1'b0;
     end
   end
@@ -247,57 +250,67 @@ module spi_engine_offload #(
     .out_bits(trigger_s));
 
   always @(posedge spi_clk) begin
-    if (spi_resetn == 1'b0) begin
+    if (!spi_resetn) begin
+      trigger_last_reg <= 1'b0;
+    end else begin
+      trigger_last_reg <= trigger_s;
+    end
+  end
+
+  assign trigger_posedge = trigger_s && !trigger_last_reg;
+
+  always @(posedge spi_clk) begin
+    if (!spi_resetn) begin
       spi_active <= 1'b0;
     end else begin
-      if (spi_active == 1'b0) begin
+      if (!spi_active) begin
         // start offload when we have a valid trigger, offload is enabled and
         // the DMA is enabled
-        if (trigger_s == 1'b1 && spi_enable == 1'b1 && offload_sdi_ready == 1'b1)
+        if (trigger_posedge && spi_enable && offload_sdi_ready)
           spi_active <= 1'b1;
-      end else if (cmd_ready == 1'b1 && spi_cmd_rd_addr_next == ctrl_cmd_wr_addr) begin
+      end else if (cmd_ready && (spi_cmd_rd_addr_next == ctrl_cmd_wr_addr)) begin
         spi_active <= 1'b0;
       end
     end
   end
 
   always @(posedge spi_clk) begin
-    if (cmd_valid == 1'b0) begin
+    if (!cmd_valid) begin
       spi_cmd_rd_addr <= 'h00;
-    end else if (cmd_ready == 1'b1) begin
+    end else if (cmd_ready) begin
       spi_cmd_rd_addr <= spi_cmd_rd_addr_next;
     end
   end
 
   always @(posedge spi_clk) begin
-    if (spi_active == 1'b0) begin
+    if (!spi_active) begin
       spi_sdo_rd_addr <= 'h00;
-    end else if (sdo_data_ready == 1'b1) begin
+    end else if (sdo_data_ready) begin
       spi_sdo_rd_addr <= spi_sdo_rd_addr + 1'b1;
     end
   end
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_mem_reset == 1'b1)
+    if (ctrl_mem_reset)
       ctrl_cmd_wr_addr <= 'h00;
-    else if (ctrl_cmd_wr_en == 1'b1)
+    else if (ctrl_cmd_wr_en)
       ctrl_cmd_wr_addr <= ctrl_cmd_wr_addr + 1'b1;
   end
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_cmd_wr_en == 1'b1)
+    if (ctrl_cmd_wr_en)
       cmd_mem[ctrl_cmd_wr_addr] <= ctrl_cmd_wr_data;
   end
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_mem_reset == 1'b1)
+    if (ctrl_mem_reset)
       ctrl_sdo_wr_addr <= 'h00;
-    else if (ctrl_sdo_wr_en == 1'b1)
+    else if (ctrl_sdo_wr_en)
       ctrl_sdo_wr_addr <= ctrl_sdo_wr_addr + 1'b1;
   end
 
   always @(posedge ctrl_clk) begin
-    if (ctrl_sdo_wr_en == 1'b1)
+    if (ctrl_sdo_wr_en)
       sdo_mem[ctrl_sdo_wr_addr] <= ctrl_sdo_wr_data;
   end
 

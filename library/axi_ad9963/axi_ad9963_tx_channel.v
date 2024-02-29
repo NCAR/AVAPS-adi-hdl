@@ -26,7 +26,7 @@
 //
 //   2. An ADI specific BSD license, which can be found in the top level directory
 //      of this repository (LICENSE_ADIBSD), and also on-line at:
-//      https://github.com/analogdevicesinc/hdl/blob/master/LICENSE_ADIBSD
+//      https://github.com/analogdevicesinc/hdl/blob/main/LICENSE_ADIBSD
 //      This will allow to generate bit files and not release the source code,
 //      as long as it attaches to an ADI device.
 //
@@ -58,7 +58,6 @@ module axi_ad9963_tx_channel #(
   output reg  [11:0]  dac_data_out,
   input       [11:0]  dac_data_in,
   input               dma_valid,
-  output              out_data_valid,
 
   // processor interface
 
@@ -112,8 +111,6 @@ module axi_ad9963_tx_channel #(
   wire            dac_iqcor_enb_s;
   wire    [15:0]  dac_iqcor_coeff_1_s;
   wire    [15:0]  dac_iqcor_coeff_2_s;
-
-  assign out_data_valid = dac_iqcor_valid_s;
 
   // dac iq correction
 
