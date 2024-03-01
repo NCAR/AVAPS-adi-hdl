@@ -1,6 +1,6 @@
 // ***************************************************************************
 // ***************************************************************************
-// Copyright (C) 2022-2023 Analog Devices, Inc. All rights reserved.
+// Copyright (C) 2021-2023 Analog Devices, Inc. All rights reserved.
 //
 // In this HDL repository, there are many different and unique modules, consisting
 // of various HDL (Verilog or VHDL) components. The individual modules are
@@ -26,7 +26,7 @@
 //
 //   2. An ADI specific BSD license, which can be found in the top level directory
 //      of this repository (LICENSE_ADIBSD), and also on-line at:
-//      https://github.com/analogdevicesinc/hdl/blob/main/LICENSE_ADIBSD
+//      https://github.com/analogdevicesinc/hdl/blob/master/LICENSE_ADIBSD
 //      This will allow to generate bit files and not release the source code,
 //      as long as it attaches to an ADI device.
 //
@@ -282,9 +282,9 @@ module system_top (
   wire    [94:0]  gpio_o;
   wire    [94:0]  gpio_t;
 
-  wire    [63:0]  fmcxmwbr1_gpio_i;
-  wire    [63:0]  fmcxmwbr1_gpio_o;
-  wire    [63:0]  fmcxmwbr1_gpio_t;
+  wire    [63:0]  xmicrowave_gpio_i;
+  wire    [63:0]  xmicrowave_gpio_o;
+  wire    [63:0]  xmicrowave_gpio_t;
 
   wire    [2:0]   spi_csn;
   wire    [7:0]   spi1_csn;
@@ -334,7 +334,22 @@ module system_top (
   assign gpio_2_exp_n = spi_3_to_8_csn[5];
 
   assign spi1_cs0 = spi1_csn[0];
+  assign spi1_cs1 = spi1_csn[1];
+  assign spi1_cs2 = spi1_csn[2];
+  assign spi1_cs3 = spi1_csn[3];
+  assign spi1_cs4 = spi1_csn[4];
+  assign spi1_cs5 = spi1_csn[5];
+  assign spi1_cs6 = spi1_csn[6];
+  assign spi1_cs7 = spi1_csn[7];
+
   assign spi2_cs0 = spi2_csn[0];
+  assign spi2_cs1 = spi2_csn[1];
+  assign spi2_cs2 = spi2_csn[2];
+  assign spi2_cs3 = spi2_csn[3];
+  assign spi2_cs4 = spi2_csn[4];
+  assign spi2_cs5 = spi2_csn[5];
+  assign spi2_cs6 = spi2_csn[6];
+  assign spi2_cs7 = spi2_csn[7];
 
   adrv9009zu11eg_spi i_spi (
     .spi_csn(spi_3_to_8_csn),
@@ -350,37 +365,23 @@ module system_top (
   assign gpio_i[31:28] = gpio_o[31:28];
   assign gpio_i[21:20] = gpio_o[21:20];
 
-  assign fmcxmwbr1_gpio_i[63:30] = fmcxmwbr1_gpio_o[63:30];
+  assign xmicrowave_gpio_i[63:16] = xmicrowave_gpio_o[63:16];
 
   ad_iobuf #(
-    .DATA_WIDTH(30)
-  ) i_fmcxmwbr1_iobuf (
-    .dio_t ({fmcxmwbr1_gpio_t[29:0]}),
-    .dio_i ({fmcxmwbr1_gpio_o[29:0]}),
-    .dio_o ({fmcxmwbr1_gpio_i[29:0]}),
+    .DATA_WIDTH(16)
+  ) i_xmicrowave_iobuf (
+    .dio_t ({xmicrowave_gpio_t[15:0]}),
+    .dio_i ({xmicrowave_gpio_o[15:0]}),
+    .dio_o ({xmicrowave_gpio_i[15:0]}),
     .dio_p ({
-              dir_gpio7,   // 29
-              dir_gpio6,   // 28
-              dir_gpio5,   // 27
-              dir_gpio4,   // 26
-              dir_gpio3,   // 25
-              dir_gpio2,   // 24
-              dir_gpio1,   // 23
-              dir_gpio0,   // 22
-              spi2_cs7,    // 21
-              spi2_cs6,    // 20
-              spi2_cs5,    // 19
-              spi2_cs4,    // 18
-              spi2_cs3,    // 17
-              spi2_cs2,    // 16
-              spi2_cs1,    // 15
-              spi1_cs7,    // 14
-              spi1_cs6,    // 13
-              spi1_cs5,    // 12
-              spi1_cs4,    // 11
-              spi1_cs3,    // 10
-              spi1_cs2,    // 09
-              spi1_cs1,    // 08
+              dir_gpio7,   // 15
+              dir_gpio6,   // 14
+              dir_gpio5,   // 13
+              dir_gpio4,   // 12
+              dir_gpio3,   // 11
+              dir_gpio2,   // 10
+              dir_gpio1,   // 09
+              dir_gpio0,   // 08
               gpio7,       // 07
               gpio6,       // 06
               gpio5,       // 05
@@ -666,11 +667,11 @@ module system_top (
     .iic_1_sda_io (sdaout1),
     .iic_2_scl_io (sclout2),
     .iic_2_sda_io (sdaout2),
-    .fmcxmwbr1_gpio0_o(fmcxmwbr1_gpio_o[31:0]),
-    .fmcxmwbr1_gpio0_t(fmcxmwbr1_gpio_t[31:0]),
-    .fmcxmwbr1_gpio0_i(fmcxmwbr1_gpio_i[31:0]),
-    .fmcxmwbr1_gpio1_o(fmcxmwbr1_gpio_o[63:32]),
-    .fmcxmwbr1_gpio1_t(fmcxmwbr1_gpio_t[63:32]),
-    .fmcxmwbr1_gpio1_i(fmcxmwbr1_gpio_i[63:32]));
+    .xmicrowave_gpio0_o(xmicrowave_gpio_o[31:0]),
+    .xmicrowave_gpio0_t(xmicrowave_gpio_t[31:0]),
+    .xmicrowave_gpio0_i(xmicrowave_gpio_i[31:0]),
+    .xmicrowave_gpio1_o(xmicrowave_gpio_o[63:32]),
+    .xmicrowave_gpio1_t(xmicrowave_gpio_t[63:32]),
+    .xmicrowave_gpio1_i(xmicrowave_gpio_i[63:32]));
 
 endmodule

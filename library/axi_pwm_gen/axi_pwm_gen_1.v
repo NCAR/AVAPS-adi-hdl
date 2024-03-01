@@ -26,7 +26,7 @@
 //
 //   2. An ADI specific BSD license, which can be found in the top level directory
 //      of this repository (LICENSE_ADIBSD), and also on-line at:
-//      https://github.com/analogdevicesinc/hdl/blob/main/LICENSE_ADIBSD
+//      https://github.com/analogdevicesinc/hdl/blob/master/LICENSE_ADIBSD
 //      This will allow to generate bit files and not release the source code,
 //      as long as it attaches to an ADI device.
 //
@@ -47,8 +47,8 @@ module axi_pwm_gen_1 #(
   input               load_config,
   input               sync,
 
-  output              pulse,
-  output              pulse_armed
+  output  reg         pulse,
+  output      [31:0]  pulse_counter
 );
 
   // internal registers
@@ -59,8 +59,6 @@ module axi_pwm_gen_1 #(
   reg     [31:0]               pulse_period_d = PULSE_PERIOD;
   reg     [31:0]               pulse_width_d = PULSE_WIDTH;
   reg                          phase_align_armed = 1'b1;
-  reg                          pulse_i = 1'b0;
-  reg                          busy = 1'b0;
 
   // internal wires
 
@@ -109,19 +107,7 @@ module axi_pwm_gen_1 #(
     end
   end
 
-  always @(posedge clk) begin
-    if (rstn == 1'b0) begin
-      busy <= 1'b0;
-    end else begin
-      if (end_of_period) begin
-        busy <= 1'b0;
-      end else if ( ~(phase_align_armed & sync)) begin
-        busy <= 1'b1;
-      end
-    end
-  end
-
-  assign phase_align = phase_align_armed & sync & busy;
+  assign phase_align = phase_align_armed & sync;
 
   // a free running counter
 
@@ -141,14 +127,13 @@ module axi_pwm_gen_1 #(
   // generate pulse with a specified width
 
   always @ (posedge clk) begin
-    if ((rstn == 1'b0) || (end_of_pulse == 1'b1)) begin
-      pulse_i <= 1'b0;
-    end else if ((end_of_period == 1'b1 || phase_align == 1'b1) && pulse_enable == 1'b1) begin
-      pulse_i <= 1'b1;
+    if ((rstn == 1'b0) || (phase_align == 1'b1) || (end_of_pulse == 1'b1)) begin
+      pulse <= 1'b0;
+    end else if (end_of_period == 1'b1 && pulse_enable == 1'b1) begin
+      pulse <= 1'b1;
     end
   end
 
-  assign pulse = pulse_i & !(phase_align_armed & sync);
-  assign pulse_armed = phase_align_armed;
+  assign pulse_counter = pulse_period_cnt;
 
 endmodule

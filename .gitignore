@@ -107,5 +107,3 @@ _build
 .qsys_edit
 .github/CODEOWNERS
 .github/PULL_REQUEST_TEMPLATE.md
-library/**/.lock
-library/**/interfaces/*.sv

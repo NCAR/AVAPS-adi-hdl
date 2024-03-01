@@ -51,7 +51,7 @@ CLEAN_TARGET += tb/libraries
 
 GENERIC_DEPS += $(HDL_LIBRARY_PATH)../scripts/adi_env.tcl
 
-.PHONY: all intel xilinx clean clean-all
+.PHONY: all intel intel_dep xilinx xilinx_dep clean clean-all
 
 all: intel xilinx
 
@@ -59,49 +59,46 @@ clean: clean-all
 
 clean-all:
 	$(call clean, \
-		$(CLEAN_TARGET) .lock, \
+		$(CLEAN_TARGET), \
 		$(HL)$(LIBRARY_NAME)$(NC) library)
 
 ifneq ($(INTEL_DEPS),)
 
 INTEL_DEPS += $(GENERIC_DEPS)
 INTEL_DEPS += $(HDL_LIBRARY_PATH)scripts/adi_ip_intel.tcl
-_INTEL_LIB_DEPS = $(foreach dep,$(INTEL_LIB_DEPS),$(HDL_LIBRARY_PATH)$(dep)/.timestamp_intel)
+INTEL_DEPS += $(foreach dep,$(INTEL_LIB_DEPS),$(HDL_LIBRARY_PATH)$(dep)/.timestamp_intel)
 
-intel: .timestamp_intel
+intel: intel_dep .timestamp_intel
 
-.timestamp_intel: $(INTEL_DEPS) $(_INTEL_LIB_DEPS)
+.timestamp_intel: $(INTEL_DEPS)
 	touch $@
 
-$(_INTEL_LIB_DEPS):
-	$(MAKE) -C $(dir $@) intel
-
+intel_dep:
+	@for lib in $(INTEL_LIB_DEPS); do \
+		$(MAKE) -C $(HDL_LIBRARY_PATH)$${lib} intel || exit $$?; \
+	done
 endif
 
 ifneq ($(XILINX_DEPS),)
 
 XILINX_DEPS += $(GENERIC_DEPS)
 XILINX_DEPS += $(HDL_LIBRARY_PATH)scripts/adi_ip_xilinx.tcl
-_XILINX_LIB_DEPS = $(foreach dep,$(XILINX_LIB_DEPS),$(HDL_LIBRARY_PATH)$(dep)/component.xml)
-_XILINX_INTF_DEPS = $(foreach dep,$(XILINX_INTERFACE_DEPS),$(HDL_LIBRARY_PATH)$(dep))
+XILINX_DEPS += $(foreach dep,$(XILINX_LIB_DEPS),$(HDL_LIBRARY_PATH)$(dep)/component.xml)
 
-xilinx: component.xml
+xilinx: xilinx_dep component.xml
 
-.DELETE_ON_ERROR:
-
-component.xml: $(XILINX_DEPS) $(_XILINX_INTF_DEPS) $(_XILINX_LIB_DEPS)
+component.xml: $(XILINX_DEPS)
 	-rm -rf $(CLEAN_TARGET)
 	$(call build, \
 		$(VIVADO) $(LIBRARY_NAME)_ip.tcl, \
 		$(LIBRARY_NAME)_ip.log, \
 		$(HL)$(LIBRARY_NAME)$(NC) library)
 
-$(_XILINX_INTF_DEPS):
-	$(MAKE) -C $(dir $@) $(notdir $@)
-
-$(_XILINX_LIB_DEPS):
-	flock $(dir $@).lock -c "$(MAKE) -C $(dir $@) xilinx"; exit $$?
-
-%.xml:
-	$(MAKE) -C $(dir $@) $(notdir $@)
+xilinx_dep:
+	@for lib in $(XILINX_LIB_DEPS); do \
+		$(MAKE) -C $(HDL_LIBRARY_PATH)$${lib} xilinx || exit $$?; \
+	done
+	@for intf in $(XILINX_INTERFACE_DEPS); do \
+		$(MAKE) -C $(HDL_LIBRARY_PATH)$${intf} xilinx || exit $$?; \
+	done
 endif

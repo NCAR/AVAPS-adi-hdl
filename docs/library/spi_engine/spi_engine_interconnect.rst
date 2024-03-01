@@ -3,7 +3,8 @@
 SPI Engine Interconnect Module
 ================================================================================
 
-.. hdl-component-diagram::
+.. symbolator:: ../../../library/spi_engine/spi_engine_interconnect/spi_engine_interconnect.v
+   :caption: axi_spi_engine
 
 The SPI Engine Interconnect module allows connecting multiple
 :ref:`spi_engine control-interface` masters to a single
@@ -37,6 +38,7 @@ Configuration Parameters
 --------------------------------------------------------------------------------
 
 .. hdl-parameters::
+   :path: library/spi_engine/spi_engine_interconnect
 
    * - DATA_WIDTH
      - Data width of the parallel SDI/SDO data interfaces.

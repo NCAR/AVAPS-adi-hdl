@@ -1,3 +1,10 @@
 sphinx
-https://github.com/analogdevicesinc/doctools/releases/download/latest/adi-doctools.tar.gz
-sphinxcontrib.wavedrom
+lxml
+furo
+wavedrom
+aiohttp
+aiodns
+sphinxcontrib-wavedrom
+sphinxcontrib-svg2pdfconverter
+https://github.com/hdl/pyhdlparser/tarball/master
+https://github.com/hdl/symbolator/tarball/master
