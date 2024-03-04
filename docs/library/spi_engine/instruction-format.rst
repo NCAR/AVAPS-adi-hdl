@@ -197,9 +197,14 @@ bus behavior.
    * - Bits
      - Name
      - Description
-   * - [7:3]
+   * - [7:4]
      - reserved
      - Must always be 0.
+   * - [3]
+     - always_cs
+     - Configures the No-CS mode. When 1, the SPI Engine does not gate 
+     - transactions with the CS state. When 0, the SPI Engine treats the
+     - CS line as usual.
    * - [2]
      - three_wire
      - Configures the output of the three_wire pin.
