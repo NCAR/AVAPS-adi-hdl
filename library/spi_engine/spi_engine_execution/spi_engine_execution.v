@@ -133,6 +133,7 @@ module spi_engine_execution #(
   reg cpha = DEFAULT_SPI_CFG[0];
   reg cpol = DEFAULT_SPI_CFG[1];
   reg [7:0] clk_div = DEFAULT_CLK_DIV;
+  reg always_cs = DEFAULT_SPI_CFG[3];;
 
   reg sdo_enabled = 1'b0;
   reg sdi_enabled = 1'b0;
@@ -206,6 +207,7 @@ module spi_engine_execution #(
       cpha <= DEFAULT_SPI_CFG[0];
       cpol <= DEFAULT_SPI_CFG[1];
       three_wire <= DEFAULT_SPI_CFG[2];
+      always_cs  <= DEFAULT_SPI_CFG[3];
       clk_div <= DEFAULT_CLK_DIV;
       word_length <= DATA_WIDTH;
       left_aligned <= 8'b0;
@@ -214,6 +216,7 @@ module spi_engine_execution #(
         cpha <= cmd[0];
         cpol <= cmd[1];
         three_wire <= cmd[2];
+        always_cs  <= cmd[3];
       end else if (cmd[9:8] == REG_CLK_DIV) begin
         clk_div <= cmd[7:0];
       end else if (cmd[9:8] == REG_WORD_LENGTH) begin
@@ -425,7 +428,7 @@ module spi_engine_execution #(
     if (!resetn) begin // set cs_active during reset for a cycle to clear shift reg
       cs_active <= 1;
     end else begin
-      cs_active <= ~(&cmd_d1[NUM_OF_CS-1:0]) & cs_gen;
+      cs_active <= (always_cs) ? transfer_active : ~(&cmd_d1[NUM_OF_CS-1:0]) & cs_gen;
     end
   end
 
