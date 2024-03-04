@@ -3,8 +3,6 @@
 ### SPDX short identifier: ADIBSD
 ###############################################################################
 
-# ad7960_fmcz
-
 if {![info exists RESOLUTION_16_18N]} {
   set RESOLUTION_16_18N $::env(RESOLUTION_16_18N)
 }
@@ -61,5 +59,3 @@ set input_ports         d_p;      # List of input ports
 # Input Delay Constraint
 set_input_delay -clock $input_clock -max [expr $input_clock_period - $dv_bre] [get_ports $input_ports];
 set_input_delay -clock $input_clock -min $dv_are                              [get_ports $input_ports];
-          
-set_clock_uncertainty -setup -from [get_clocks out_clock] -to [get_clocks dco] 7.000
