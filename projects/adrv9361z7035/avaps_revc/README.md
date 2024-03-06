@@ -45,9 +45,10 @@ Building adrv9361z7035_avaps_revc project [/home/martinc/AVAPS-chassis/AVAPS-adi
 *Hint: `tail -f` the log file to watch the progress and to quickly see the build errors`*
 
 ### ADI build system
-ADI provides [documentation](https://wiki.analog.com/resources/fpga/docs/hdl/porting_project_quick_start_guide)
+ADI provides [wiki documentation](https://wiki.analog.com/resources/fpga/docs/hdl/porting_project_quick_start_guide)
+(and [a better presentation](https://analogdevicesinc.github.io/hdl/user_guide/architecture.html))
 on the build system. Some description of the various project files is given there,
-althoughg to get acomplete understanding you  will probably have to do
+although to get a complete understanding you will likely have to do
 some digging around in the code base.
 
 ADI provides a library of tcl convenience functions, which assemble
