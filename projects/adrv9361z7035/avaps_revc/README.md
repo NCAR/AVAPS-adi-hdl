@@ -4,6 +4,15 @@ This is a carrier board project for the AVAPS RevC receiver.
 AVAPS is based on the *adrv9361z7035_ccbob_cmos* reference
 design. 
 
+For maintinability, we want to use the ADI hdl repository
+and tooling with minimal modification. Addition of this
+directory is the only modification made to the repository
+fork.
+
+It would be nice to have a scheme where this directory
+could live outside of the repository tree and still access
+the ADI build system.
+
 ## Building
 ```sh
 cd hdl/projects/adrv9361z7035/avaps_revc
