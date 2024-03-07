@@ -43,6 +43,11 @@ delete_bd_objs [get_bd_ports /gt_tx_n]
 
 delete_bd_objs [get_bd_cells axi_pz_xcvrlb]
 
+# Remove Tx functions
+delete_bd_objs [get_bd_cells util_ad9361_dac_upack]
+delete_bd_objs [get_bd_cells axi_ad9361_dac_dma]
+delete_bd_objs [get_bd_cells util_ad9361_dac_upack_fifo]
+
 # Add AVAPS ports
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_carrier
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 gpio_launcher_in
@@ -51,9 +56,6 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 gpio_us
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 rs232_out
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 uart_gps
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 uart_sonde
-
-create_bd_port -dir O clkout_out
-create_bd_port -dir I clkout_in
 
 # axi_uart16550_gps
 ad_ip_instance axi_uart16550 axi_uart16550_gps
