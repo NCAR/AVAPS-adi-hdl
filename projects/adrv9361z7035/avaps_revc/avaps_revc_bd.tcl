@@ -41,12 +41,23 @@ delete_bd_objs [get_bd_ports /gt_rx_n]
 delete_bd_objs [get_bd_ports /gt_tx_p]
 delete_bd_objs [get_bd_ports /gt_tx_n]
 
+delete_bd_objs [get_bd_ports /tdd_sync_t]
+delete_bd_objs [get_bd_ports /tdd_sync_o]
+
 delete_bd_objs [get_bd_cells axi_pz_xcvrlb]
 
 # Remove Tx functions
 delete_bd_objs [get_bd_cells util_ad9361_dac_upack]
 delete_bd_objs [get_bd_cells axi_ad9361_dac_dma]
-delete_bd_objs [get_bd_cells util_ad9361_dac_upack_fifo]
+delete_bd_objs [get_bd_cells axi_ad9361_dac_fifo]
+delete_bd_objs [get_bd_cells util_ad9361_tdd_sync]
+#delete_bd_objs [get_bd_nets axi_ad9361_dac_dma_irq]
+#delete_bd_objs [get_bd_nets axi_ad9361_dac_fifo_din_valid_0]
+#delete_bd_objs [get_bd_nets util_ad9361_dac_upack_fifo_rd_underflow]
+foreach n {0 1 2 3} {
+  delete_bd_objs [get_bd_nets axi_ad9361_dac_fifo_din_enable_$n]
+  delete_bd_objs [get_bd_nets util_ad9361_dac_upack_fifo_rd_data_$n]
+}
 
 # Add AVAPS ports
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 iic_carrier
@@ -56,6 +67,30 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 gpio_us
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 rs232_out
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 uart_gps
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 uart_sonde
+
+# Add ground signals of various widths
+ad_ip_instance  xlconstant     xlconstant1_0
+ad_ip_parameter xlconstant1_0  CONFIG.CONST_WIDTH 1
+ad_ip_parameter xlconstant1_0  CONFIG.CONST_VAL 0
+
+ad_ip_instance  xlconstant     xlconstant16_0
+ad_ip_parameter xlconstant16_0 CONFIG.CONST_WIDTH 16
+ad_ip_parameter xlconstant16_0 CONFIG.CONST_VAL 0
+
+ad_ip_instance  xlconstant     xlconstant32_0
+ad_ip_parameter xlconstant32_0 CONFIG.CONST_WIDTH 32
+ad_ip_parameter xlconstant32_0 CONFIG.CONST_VAL 0
+
+# Tie off DAC inputs ad9361
+ad_connect    axi_ad9361/tdd_sync       xlconstant1_0/dout 
+ad_connect    axi_ad9361/dac_sync_in    xlconstant1_0/dout 
+ad_connect    axi_ad9361/dac_dunf       xlconstant1_0/dout 
+ad_connect    axi_ad9361/dac_data_i0    xlconstant16_0/dout
+ad_connect    axi_ad9361/dac_data_q0    xlconstant16_0/dout
+ad_connect    axi_ad9361/dac_data_i1    xlconstant16_0/dout
+ad_connect    axi_ad9361/dac_data_q1    xlconstant16_0/dout
+ad_connect    axi_ad9361/up_dac_gpio_in xlconstant32_0/dout
+ad_connect    axi_ad9361/up_adc_gpio_in xlconstant32_0/dout
 
 # axi_uart16550_gps
 ad_ip_instance axi_uart16550 axi_uart16550_gps
