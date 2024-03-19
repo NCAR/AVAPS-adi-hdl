@@ -136,14 +136,14 @@ ad_ip_parameter     axi_gpio_usb       CONFIG.C_ALL_OUTPUTS 1
 ad_connect          axi_gpio_usb/gpio  gpio_usb
 ad_cpu_interconnect 0x41220000         axi_gpio_usb
 
-# axi_specwin
-ad_ip_instance      specwin                   axi_specwin
-ad_connect          axi_specwin/ipcore_clk    util_ad9361_divclk/clk_out                 
-ad_connect          axi_specwin/ipcore_resetn util_ad9361_divclk_reset/peripheral_aresetn
-ad_connect          axi_specwin/iin           util_ad9361_adc_fifo/dout_data_0           
-ad_connect          axi_specwin/qin           util_ad9361_adc_fifo/dout_data_1         
-ad_connect          axi_specwin/validin       util_ad9361_adc_fifo/dout_valid_0         
-my_cpu_interconnect 0x43C80000 axi_specwin
+# axi_specavg
+ad_ip_instance      specavg                   axi_specavg
+ad_connect          axi_specavg/ipcore_clk    util_ad9361_divclk/clk_out                 
+ad_connect          axi_specavg/ipcore_resetn util_ad9361_divclk_reset/peripheral_aresetn
+ad_connect          axi_specavg/iin           util_ad9361_adc_fifo/dout_data_0           
+ad_connect          axi_specavg/qin           util_ad9361_adc_fifo/dout_data_1         
+ad_connect          axi_specavg/validin       util_ad9361_adc_fifo/dout_valid_0         
+my_cpu_interconnect 0x43C80000 axi_specavg
 
 # axi_spec dma
 ad_ip_instance  axi_dmac                         axi_dmac_spec
@@ -162,10 +162,10 @@ ad_cpu_interrupt ps-15 mb-15 axi_dmac_spec/irq
 ad_cpu_interconnect 0x43C90000                   axi_dmac_spec
 ad_mem_hp2_interconnect sys_cpu_clk axi_dmac_spec/m_dest_axi
 
-# Connect specwin to axi_dmac_spec
-ad_connect axi_specwin/specout                         axi_dmac_spec/fifo_wr_din
-ad_connect axi_specwin/validout                        axi_dmac_spec/fifo_wr_en
-#ad_connect axi_specwin/sync                           axi_dmac_spec/fifo_wr_sync
+# Connect specavg to axi_dmac_spec
+ad_connect axi_specavg/specout                         axi_dmac_spec/fifo_wr_din
+ad_connect axi_specavg/validout                        axi_dmac_spec/fifo_wr_en
+#ad_connect axi_specavg/sync                           axi_dmac_spec/fifo_wr_sync
 
 # Create the receiver/uart pairs
 set i 0
