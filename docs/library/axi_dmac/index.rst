@@ -1,13 +1,13 @@
 .. _axi_dmac:
 
-High-Speed DMA Controller
+AXI DMAC
 ================================================================================
 
 .. hdl-component-diagram::
 
-The AXI DMAC is a high-speed, high-throughput, general purpose DMA controller
-intended to be used to transfer data between system memory and other peripherals
-like high-speed converters.
+The :git-hdl:`AXI DMA Controller <library/axi_dmac>` IP core is a high-speed,
+high-throughput, general purpose DMA controller intended to be used to transfer
+data between system memory and other peripherals like high-speed converters.
 
 Features
 --------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ De-assertion of the reset signal should by synchronous to ``s_axi_aclk``.
 Data Interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-AXI-Streaming slave
+AXI-Streaming subordinate
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 The interface back-pressures through the ``s_axis_ready`` signal. If the core is
@@ -602,7 +602,7 @@ the following order:
      - id
      - This field corresponds to an identifier of the descriptor.
    * - 64‑bit
-     - dest_addr 
+     - dest_addr
      - This field contains the destination address of the transfer.
    * - 64‑bit
      - src_addr
@@ -617,7 +617,7 @@ the following order:
      - x_len
      - This field contains the number of bytes to transfer, minus one.
    * - 32‑bit
-     - src_stride 
+     - src_stride
      - This field contains the number of bytes between the start of one row and
        the next row for the source address.
    * - 32-bit
@@ -669,6 +669,25 @@ For the FIFO write interface the ``fifo_wr_sync`` signal is the synchronization
 flag signal. For the AXI-Streaming interface the synchronization flag is carried
 in ``s_axis_user[0]``. In both cases the synchronization flag is qualified by
 the same control signal as the data.
+
+Cache Coherency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To enable Cache Coherency between the DMA and the CPU, the ``CACHE_COHERENT``
+HDL synthesis configuration parameter must be set.
+
+Two additional parameters are used to configure the Cache Coherent transactions:
+
+-  ``AXI_AXCACHE`` sets the ARCACHE/AWCACHE AXI cache support signals;
+-  ``AXI_AXPROT`` sets the ARPROT/AWPROT AXI access permission signals.
+
+They are initially set to the following default values through ``CACHE_COHERENT``:
+
+-  ``AXI_AXCACHE`` = ``CACHE_COHERENT`` ? ``4'b1111`` : ``4'b0011``
+-  ``AXI_AXPROT`` = ``CACHE_COHERENT`` ? ``3'b010``  : ``3'b000``
+
+If Cache Coherency is enabled, the ``AXI_AXCACHE`` and ``AXI_AXPROT`` values can
+be changed to support systems with different caching policies.
 
 Diagnostics interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

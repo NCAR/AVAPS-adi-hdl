@@ -1,18 +1,92 @@
-Libraries
+.. _library:
+
+IP Cores
 ===============================================================================
 
 .. note::
 
-   This page lists only the IPs that have been ported to the new documentation
-   format.
+   See :ref:`user_guide ip_cores` for templates and user guides.
 
-   See :ref:`ip_cores` for a complete list of IP cores.
+Frameworks
+-------------------------------------------------------------------------------
 
-Contents
+.. toctree::
+   :maxdepth: 1
+
+   i3c_controller/index
+   jesd204/index
+   spi_engine/index
+
+ADC/DAC
+-------------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   axi_ad3552r/index
+   axi_ad7606x/index
+   axi_ad7616/index
+   axi_ad7768/index
+   axi_ad777x/index
+   axi_ad9265/index
+   axi_ad9361/index
+   axi_ad9467/index
+   axi_ad9671/index
+   axi_ad9783/index
+   axi_ad9963/index
+   axi_adaq8092/index
+
+Data Offload
+-------------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   data_offload/index
+
+
+DMA
 -------------------------------------------------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
    axi_dmac/index
-   spi_engine/index
+
+Video
+-------------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   axi_hdmi_tx/index
+   axi_hdmi_rx/index
+
+Utilities
+-------------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   axi_adc_decimate/index
+   axi_adc_trigger/index
+   axi_adxcvr/index
+   axi_clkgen/index
+   axi_dac_interpolate/index
+   axi_fan_control/index
+   axi_laser_driver/index
+   axi_logic_analyzer/index
+   axi_pwm_gen/index
+   axi_sysid/index
+   axi_tdd/index
+   common/ad_dds/index
+   util_axis_fifo/index
+   util_axis_fifo_asym/index
+   util_extract/index
+   util_mii_to_rmii/index
+   util_pack/util_cpack2
+   util_pack/util_upack2
+   util_rfifo/index
+   util_var_fifo/index
+   util_wfifo/index
+   xilinx/index

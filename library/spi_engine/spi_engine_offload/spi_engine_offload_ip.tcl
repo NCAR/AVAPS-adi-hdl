@@ -15,7 +15,7 @@ adi_ip_files spi_engine_offload [list \
 ]
 
 adi_ip_properties_lite spi_engine_offload
-adi_ip_ttcl axi_spi_engine "spi_engine_offload_constr.ttcl"
+adi_ip_ttcl spi_engine_offload "spi_engine_offload_constr.ttcl"
 
 set_property company_url {https://wiki.analog.com/resources/fpga/peripherals/spi_engine/offload} [ipx::current_core]
 
@@ -66,9 +66,9 @@ adi_add_bus "offload_sdi" "master" \
 	"xilinx.com:interface:axis_rtl:1.0" \
 	"xilinx.com:interface:axis:1.0" \
 	{ \
-		{"offload_sdi_valid" "tvalid"} \
-		{"offload_sdi_ready" "tready"} \
-		{"offload_sdi_data" "tdata"} \
+		{"offload_sdi_valid" "TVALID"} \
+		{"offload_sdi_ready" "TREADY"} \
+		{"offload_sdi_data" "TDATA"} \
 	}
 
 adi_add_bus_clock "spi_clk" "spi_engine_ctrl:offload_sdi" "spi_resetn"

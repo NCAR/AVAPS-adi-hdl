@@ -1,6 +1,6 @@
 // ***************************************************************************
 // ***************************************************************************
-// Copyright (C) 2015-2023 Analog Devices, Inc. All rights reserved.
+// Copyright (C) 2015-2024 Analog Devices, Inc. All rights reserved.
 //
 // In this HDL repository, there are many different and unique modules, consisting
 // of various HDL (Verilog or VHDL) components. The individual modules are
@@ -76,10 +76,11 @@ module spi_engine_execution #(
   output reg three_wire
 );
 
-  localparam CMD_TRANSFER = 2'b00;
-  localparam CMD_CHIPSELECT = 2'b01;
-  localparam CMD_WRITE = 2'b10;
-  localparam CMD_MISC = 2'b11;
+  localparam CMD_TRANSFER = 3'b000;
+  localparam CMD_CHIPSELECT = 3'b001;
+  localparam CMD_WRITE = 3'b010;
+  localparam CMD_MISC = 3'b011;
+  localparam CMD_CS_INV = 3'b100;
 
   localparam MISC_SYNC = 1'b0;
   localparam MISC_SLEEP = 1'b1;
@@ -135,6 +136,8 @@ module spi_engine_execution #(
   reg [7:0] clk_div = DEFAULT_CLK_DIV;
   reg always_cs = DEFAULT_SPI_CFG[3];;
 
+  reg [NUM_OF_CS-1:0] cs_inv_mask_reg = 'h0;
+
   reg sdo_enabled = 1'b0;
   reg sdi_enabled = 1'b0;
 
@@ -142,12 +145,12 @@ module spi_engine_execution #(
 
   reg [SDI_DELAY+1:0] trigger_rx_d = {(SDI_DELAY+2){1'b0}};
 
-  wire [1:0] inst = cmd[13:12];
-  wire [1:0] inst_d1 = cmd_d1[13:12];
+  wire [2:0] inst = cmd[14:12];
+  wire [2:0] inst_d1 = cmd_d1[14:12];
 
   wire exec_cmd = cmd_ready && cmd_valid;
   wire exec_transfer_cmd = exec_cmd && inst == CMD_TRANSFER;
-
+  wire exec_cs_inv_cmd = exec_cmd && inst == CMD_CS_INV;
   wire exec_write_cmd = exec_cmd && inst == CMD_WRITE;
   wire exec_chipselect_cmd = exec_cmd && inst == CMD_CHIPSELECT;
   wire exec_misc_cmd = exec_cmd && inst == CMD_MISC;
@@ -268,8 +271,8 @@ module spi_engine_execution #(
     if (idle == 1'b1 || (cs_sleep_counter_compare && !cs_sleep_repeat && inst_d1 == CMD_CHIPSELECT)) begin
       counter <= 'h00;
     end else if (clk_div_last == 1'b1 && wait_for_io == 1'b0) begin
-      if (bit_counter == word_length) begin
-        counter <= (counter & BIT_COUNTER_CLEAR) + (transfer_active ? 'h1 : (2**BIT_COUNTER_WIDTH)) + BIT_COUNTER_CARRY;
+      if (bit_counter == word_length && transfer_active) begin
+        counter <= (counter & BIT_COUNTER_CLEAR) + 'h1 + BIT_COUNTER_CARRY;
       end else begin
         counter <= counter + (transfer_active ? 'h1 : (2**BIT_COUNTER_WIDTH));
       end
@@ -309,11 +312,21 @@ module spi_engine_execution #(
     end
   end
 
+  always @(posedge clk ) begin
+    if (resetn == 1'b0) begin
+      cs_inv_mask_reg <= 'h0;
+    end else begin
+      if (exec_cs_inv_cmd == 1'b1) begin
+        cs_inv_mask_reg <= cmd[NUM_OF_CS-1:0];
+      end
+    end
+  end
+
   always @(posedge clk) begin
     if (resetn == 1'b0) begin
       cs <= 'hff;
     end else if (cs_gen) begin
-      cs <= cmd_d1[NUM_OF_CS-1:0];
+      cs <= cmd_d1[NUM_OF_CS-1:0]^cs_inv_mask_reg[NUM_OF_CS-1:0];
     end
   end
 

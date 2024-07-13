@@ -36,8 +36,8 @@ the *base design first*, then the *board design*.
 Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Take `AD-FMCOMMS2-EBZ`_ with ZedBoard; the ``system_bd.tcl`` will look like the
-following:
+Take :adi:`AD-FMCOMMS2 <EVAL-ADFMCOMMS2>` with ZedBoard;
+the ``system_bd.tcl`` will look like the following:
 
 .. code-block:: bash
 
@@ -47,7 +47,7 @@ following:
 Typical project diagram
 -------------------------------------------------------------------------------
 
-|HDL overall system|
+.. image:: ./sources/base_platform.svg
 
 Base Design
 -------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ Microprocessor
 In our designs, we use only two types:
 
 .. list-table::
-   :widths: 20 20 20 20 20
+   :widths: 20 20 20 20 20 20
    :header-rows: 2
 
    * - Intel
@@ -77,17 +77,20 @@ In our designs, we use only two types:
      - AMD Xilinx
      -
      -
+     - Lattice
    * - **SoC**
      - **FPGA**
      - **SoC**
      - **FPGA**
      - `ACAP`_
+     - **FPGA**
    * - `HPS`_
      - `NIOS II`_
      - `PS7`_
        `PS8`_
      - `MicroBlaze`_
      - `Versal`_
+     - `riscv-rx`_
 
 .. _ACAP: https://www.xilinx.com/an/adaptive-compute-acceleration-platforms.html
 .. _HPS: https://www.intel.com/content/www/us/en/docs/programmable/683458/current/hard-processor-system-hps.html
@@ -96,6 +99,7 @@ In our designs, we use only two types:
 .. _PS8: https://www.xilinx.com/products/intellectual-property/zynq-ultra-ps-e.html
 .. _MicroBlaze: https://www.xilinx.com/products/design-tools/microblaze.html
 .. _Versal: https://www.xilinx.com/products/silicon-devices/acap/versal.html
+.. _riscv-rx: https://www.latticesemi.com/products/designsoftwareandip/intellectualproperty/ipcore/ipcores04/risc-v-rx-cpu
 
 Worth mentioning in case of SoCs, the **Hard Processor System** (HPS)
 or **Processing System 7/8** (PS7/8) do not contain just the dual-core
@@ -200,7 +204,7 @@ HDMI
 
 There is HDMI support for all the carriers which are using the ADV7511
 as HDMI transmitter. The HDMI transmitter core can be found
-:git-hdl:`here <library/axi_hdmi_tx>`.
+:git-hdl:`here (axi_hdmi_tx) <library/axi_hdmi_tx>`.
 
 GPIOs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -220,8 +224,8 @@ inputs not being assigned to.
 Depending on the processor type, add these values to the GPIO number
 from the HDL project to obtain the final number used in software:
 
--  PS7 EMIO offset = 54
--  PS8 EMIO offset = 78
+-  PS7 EMIO offset = **54**
+-  PS8 EMIO offset = **78**
 
 Connectivity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -270,6 +274,27 @@ HDL Linux Zynq Actual Zynq Linux ZynqMP Actual ZynqMP S10SoC Linux Cyclone V Act
 0   29         61          89           121           17     40              72
 === ========== =========== ============ ============= ====== =============== ================
 
+=== ==============
+HDL riscv-rx no-OS
+=== ==============
+15  15
+14  14
+13  13
+12  12
+11  11
+10  10
+9   9
+8   8
+7   7
+6   6
+5   5
+4   4
+3   3
+2   2
+1   1
+0   0
+=== ==============
+
 Board design and capabilities
 -------------------------------------------------------------------------------
 
@@ -286,7 +311,7 @@ AMD platforms
      - FMC connector 2
      - VADJ FMC connector
      - Family
-   * - `AC701 <https://www.xilinx.com/products/boards-and-kits/ek-a7-ac701-g.html>`__
+   * - `AC701 <https://www.xilinx.com/products/boards-and-kits/ek-a7-ac701-g.html>`__ **
      - JTAG
      - HPC (2 GTP @ 6.6 Gbps)
      - ---
@@ -310,7 +335,7 @@ AMD platforms
      - LPC (1 GTH @ 16.3 Gbps)
      - **\*1.8V**/1.5V/1.2V
      - Kintex UltraScale
-   * - `Microzed <http://zedboard.org/product/microzed>`__
+   * - `Microzed <http://zedboard.org/product/microzed>`__ **
      - JTAG
      - ---
      - ---
@@ -322,7 +347,7 @@ AMD platforms
      - HPC (8 GTX @ 12.5 Gbps)
      - **\*1.8V**/1.5V/1.2V
      - Virtex-7
-   * - `VC709 <https://www.xilinx.com/products/boards-and-kits/dk-v7-vc709-g.html>`__
+   * - `VC709 <https://www.xilinx.com/products/boards-and-kits/dk-v7-vc709-g.html>`__ **
      - JTAG
      - HPC (10 GTH @ 13.1 Gbps)
      - ---
@@ -352,6 +377,12 @@ AMD platforms
      - FMC+ (12 GTY @ 28.21 Gbps)
      - **\*1.5V**/1.2V
      - Versal Prime Series
+   * - `VPK180 <https://www.xilinx.com/products/boards-and-kits/vpk180.html>`__
+     - SD card
+     - FMC+ (8 GTYP @ 32.75 Gbps)
+     - ---
+     - **\*1.5V**/1.2V
+     - Versal Premium
    * - `ZC702 <https://www.xilinx.com/products/boards-and-kits/ek-z7-zc702-g.html>`__
      - SD card
      - LPC
@@ -376,6 +407,12 @@ AMD platforms
      - ---
      - 3.3V/2.5V/**\*1.8V**
      - Zynq-7000
+   * - `LFCPNX-EVN <https://www.latticesemi.com/en/Products/DevelopmentBoardsAndKits/CertusPro-NXEvaluationBoard>`__
+     - JTAG | SPI flash
+     - HPC
+     - ---
+     - ---
+     - CertusPro-NX
 
 .. note::
 
@@ -383,6 +420,11 @@ AMD platforms
    exist. If both of them exist, then it is the same for both of them.
    If there is only one FMC connector, then it applies to only one.
    If both are missing, then a --- (dash) will appear.
+
+.. note::
+
+   \*\* = not supported anymore, but projects with these carriers can be found
+   in older releases
 
 .. note::
 
@@ -399,17 +441,28 @@ Intel platforms
    :header-rows: 1
 
    * - Board name
-     - FMC connector 1
-     - FMC connector 2
-   * - `A10GX <https://www.altera.com/products/boards_and_kits/dev-kits/altera/kit-a10-gx-fpga.html>`__
-     - LPC ()
-     - HPC (8 x 17.4 Gbps)
+     - Connector 1
+     - Connector 2
+   * - `A10GX <https://www.altera.com/products/boards_and_kits/dev-kits/altera/kit-a10-gx-fpga.html>`__ **
+     - FMC LPC ()
+     - FMC HPC (8 x 17.4 Gbps)
    * - `A10SoC <https://www.altera.com/products/boards_and_kits/dev-kits/altera/arria-10-soc-development-kit.html>`__
-     - HPC (8)
-     - LPC (8)
+     - FMC HPC (8)
+     - FMC LPC (8)
    * - `S10SoC <https://www.intel.com/content/www/us/en/products/details/fpga/development-kits/stratix/10-sx.html>`__
      - FMC+ (24 @ 28.3 Gbps)
      - FMC+ (24 @ 28.3 Gbps)
+   * - `C5SoC <https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&CategoryNo=167&No=819>`__
+     - HSMC
+     - ---
+   * - `DE10Nano <https://www.intel.com/content/www/us/en/developer/topic-technology/edge-5g/hardware/fpga-de10-nano.html>`__
+     - Arduino shield
+     - ---
+
+.. note::
+
+   \*\* = not supported anymore, but projects with these carriers can be found
+   in older releases
 
 VADJ values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -431,11 +484,12 @@ VADJ values
      - **\*3.3V**/1.8V/1.2V
      - **\*3.3V**/1.8V/1.2V
 
-(**\* bold**) = default VADJ
-FMC1 & FMC2 columns -> depending on the power supply of the device
-connected to the FMC, the custom VADJ will have the value supported by
-both the carrier and the device(s)
+.. note::
 
+   (**\* bold**) = default VADJ
+   FMC1 & FMC2 columns -> depending on the power supply of the device
+   connected to the FMC, the custom VADJ will have the value supported by
+   both the carrier and the device(s)
 
 File structure of a project
 -------------------------------------------------------------------------------
@@ -512,6 +566,40 @@ A project for an Intel FPGA board should contain the following files:
    etc. The I/O ports of this Verilog module will be connected to actual
    I/O pads of the FPGA
 
+Project files for Lattice boards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A project for a Lattice FPGA board should contain the following files:
+
+-  ``Makefile`` --- auto-generated file; contains all the IP
+   dependencies needed for the project to be built
+
+-  ``system_project_pb.tcl`` --- used to build the Propel Builder project
+   (block design); linked in project-lattice.mk, run by propelbld (Windows),
+   propelbldwrap (Linux);
+
+-  ``system_project.tcl`` --- used to build the Radiant project; Linked in
+   project-lattice.mk, run by pnmainc (Windows), radiantc (Linux);
+
+-  ``system_pb.tcl`` --- linker script for the projects, sourced in
+   adi_project_pb procedure that is called in system_project_pb.tcl and it is
+   defined in adi_project_lattice_pb.tcl; sources the *base design first*,
+   then the *board design*, and afterwards it contains all the IP instances and
+   connections that must be added on top of the sourced files, to
+   complete the design of the project (these are specific to the
+   combination of this carrier and board)
+
+-  ``system_constr.sdc`` --- contains clock definitions and other path
+   constraints
+-  ``system_constr.pdc`` --- contains clock definitions and other path
+   constraints  + phisical constraints
+
+-  ``system_top.v`` --- contains everything about the HDL part of the
+   project; it instantiates the **<project_name>.v** ``system_wrapper`` module,
+   IO buffers, I/ODDRs, modules that transform signals from LVDS to single-ended,
+   etc. The I/O ports of this Verilog module will be connected to actual
+   I/O pads of the FPGA
+
 Examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -520,7 +608,3 @@ has constraints file for both PL side and PS side:
 
 -  a10soc_plddr4_assign.tcl --- constraints file for the PL
 -  a10soc_system_assign.tcl --- constraints file for the PS
-
-.. _AD-FMCOMMS2-EBZ: https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-AD-FMCOMMS2.html
-
-.. |HDL overall system| image:: ./sources/base_platform.svg

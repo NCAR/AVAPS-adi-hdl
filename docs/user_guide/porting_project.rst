@@ -93,13 +93,8 @@ Example with an AMD Xilinx board
 In this section, we are presenting all the necessary steps to create a base
 design for the AMD :xilinx:`ZCU102` development board.
 
-First, you need to create a new directory in ``hdl/projects/common`` with the name
-of the carrier.
-
-.. code:: bash
-
-   ~/hdl$ cd projects/common
-   ~/hdl/projects/common$ mkdir zcu102
+First, you need to create a new directory in ``hdl/projects/common`` with the
+name of the carrier.
 
 The **zcu102** directory must contain the following files:
 
@@ -113,8 +108,8 @@ The **zcu102** directory must contain the following files:
 
 You should define the board and its device in the project flow script
 :git-hdl:`projects/scripts/adi_project_xilinx.tcl`
-by adding the following lines to the beginning of the **adi_project_create**
-process:
+by adding the following lines after the last device specified in
+the **adi_project_create** process:
 
 .. code:: tcl
 
@@ -141,18 +136,21 @@ The **sys_zynq** constant variable should be set in the following way:
 Example with an Intel board
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To create a new base design for a given Intel FPGA carrier board, the following
-steps should be taken (the `A10SoC`_ carrier was used as an example).
+In this section, we are presenting all the necessary steps to create a base
+design for the Intel Arria 10 SoC development board (abbreviated, `A10SoC`_).
 
-The following files should be created or copied into the directory:
+First, you need to create a new directory in ``hdl/projects/common`` with the
+name of the carrier.
+
+The **a10soc** directory must contain the following files:
 
 - **a10soc_system_assign.tcl** - global and I/O assignments of the base design
 - **a10soc_system_qsys.tcl** - the QSYS base design
 
 You should define the board and its device in the flow script
 :git-hdl:`projects/scripts/adi_project_intel.tcl`,
-by adding the following lines to the beginning of the **adi_project_altera**
-process:
+by adding the following lines after the last device specified in
+the **adi_project** process:
 
 .. code:: tcl
 
@@ -161,6 +159,29 @@ process:
        set device 10AS066N3F40E2SG
        set system_qip_file system_bd/system_bd.qip
    }
+
+Example with a Lattice board
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To create a new base design for a given Lattice FPGA carrier board, the following
+steps should be taken (the `lfcpnx`_ carrier was used as an example).
+
+The following files should be created or copied into the directory:
+
+- **lfcpnx_system_constr.pdc** - global and I/O assignments of the base design
+- **lfcpnx_system_pb.tcl** - this script describes the base block design
+
+You should define the board and its device in the flow script
+:git-hdl:`projects/scripts/adi_lattice_dev_select.tcl`,
+by adding the following lines to the file:
+
+.. code:: tcl
+
+    if [regexp "_lfcpnx" $project_name] {
+        set device "LFCPNX-100-9LFG672C"
+        set speed "9_High-Performance_1.0V"
+        set board "Certus Pro NX Evaluation Board"
+    }
 
 Project files
 -------------------------------------------------------------------------------
@@ -230,6 +251,40 @@ A project for an Intel FPGA board should contain the following files:
 
 - **Makefile** - this is an auto-generated file, but after updating the carrier
   name, it should work with the new project without an issue.
+
+Project files for Lattice boards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A project for a Lattice FPGA board should contain the following files:
+
+-  **system_project_pb.tcl** - Used to build the Propel Builder project
+   (block design). Linked in project-lattice.mk, run by propelbld (Windows),
+   propelbldwrap (Linux).
+
+-  **system_project.tcl** - Used to build the Radiant project. Linked in
+   project-lattice.mk, run by pnmainc (Windows), radiantc (Linux).
+
+-  **system_pb.tcl** - linker script for the projects, sourced in adi_project_pb
+   procedure that is called in system_project_pb.tcl and it is
+   defined in adi_project_lattice_pb.tcl. Sources the *base design first*,
+   then the *board design*, and afterwards it contains all the IP instances and
+   connections that must be added on top of the sourced files, to
+   complete the design of the project (these are specific to the
+   combination of this carrier and board).
+
+-  **system_constr.sdc** - Contains clock definitions and other path
+   constraints.
+-  **system_constr.pdc** - Contains clock definitions and other path
+   constraints + phisical constraints.
+
+-  **system_top.v** - Contains everything about the HDL part of the
+   project. It instantiates the **<project_name>.v** ``system_wrapper`` module,
+   IO buffers, I/ODDRs, modules that transform signals from LVDS to single-ended,
+   etc. The I/O ports of this Verilog module will be connected to actual
+   I/O pads of the FPGA.
+
+-  **Makefile** - This is an auto-generated file, but after updating the project
+   name, it should work with the new project without an issue.
 
 Tips
 -------------------------------------------------------------------------------
@@ -318,3 +373,4 @@ To create a carrier common FMC connections file:
        that use both FMC connectors.
 
 .. _A10SoC: https://www.intel.com/content/www/us/en/products/details/fpga/development-kits/arria/10-sx.html
+.. _lfcpnx: https://www.latticesemi.com/en/Products/DevelopmentBoardsAndKits/CertusPro-NXEvaluationBoard

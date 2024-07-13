@@ -1,3 +1,7 @@
+# -- Import setup -------------------------------------------------------------
+
+from os import path
+
 # -- Project information ------------------------------------------------------
 
 repository = 'hdl'
@@ -9,7 +13,6 @@ author = 'Analog Devices, Inc.'
 
 extensions = [
     "sphinx.ext.todo",
-    "sphinx.ext.intersphinx",
     "sphinxcontrib.wavedrom",
     "adi_doctools"
 ]
@@ -23,9 +26,7 @@ source_suffix = '.rst'
 
 # -- External docs configuration ----------------------------------------------
 
-intersphinx_mapping = {
-    'doctools': ('https://analogdevicesinc.github.io/doctools', None)
-}
+interref_repos = ['doctools']
 
 # -- Custom extensions configuration ------------------------------------------
 
@@ -42,4 +43,9 @@ todo_emit_warnings = True
 html_theme = 'cosmic'
 html_static_path = ['sources']
 html_css_files = ["custom.css"]
-html_favicon = "sources/icon.svg"
+html_favicon = path.join("sources", "icon.svg")
+
+html_theme_options = {
+    "light_logo": "HDL_logo_cropped.svg",
+    "dark_logo": "HDL_logo_w_cropped.svg",
+}
